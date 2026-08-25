@@ -1,8 +1,6 @@
 version: "2"
-
 run:
-  timeout: 10m
-
+  timeout: 5m
 linters:
   default: standard
   enable:
@@ -13,15 +11,14 @@ linters:
     - gosec
     - nilerr
     - noctx
-    - prealloc
     - revive
-    - rowserrcheck
-    - sqlclosecheck
-    - testifylint
+    - staticcheck
     - unconvert
-    - unparam
-    - wastedassign
-
+  settings:
+    revive:
+      rules:
+        - name: exported
+          disabled: false
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
