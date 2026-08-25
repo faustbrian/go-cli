@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Exclude intentional nested modules from root local-proxy archives so local,
+  bootstrap, CI, and public module checksums describe the same source
+  boundary.
+
 - Track the pinned documentation-tool lockfile so clean CI checkouts install
   the exact validated cspell dependency.
 
