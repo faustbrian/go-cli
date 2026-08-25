@@ -9,7 +9,7 @@ import (
 	"testing"
 	"unicode"
 
-	cli "github.com/faustbrian/golib/pkg/cli"
+	cli "github.com/faustbrian/go-cli"
 )
 
 func FuzzRunArgv(f *testing.F) {

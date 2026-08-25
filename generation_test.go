@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	cli "github.com/faustbrian/golib/pkg/cli"
+	cli "github.com/faustbrian/go-cli"
 )
 
 func TestHelpIsGeneratedFromCompiledMetadata(t *testing.T) {

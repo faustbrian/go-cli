@@ -1,3 +1,3 @@
-module github.com/faustbrian/golib/pkg/cli
+module github.com/faustbrian/go-cli
 
 go 1.26.6

@@ -1,7 +1,7 @@
 # Root: GOWORK=off go test . -run '^$' -bench Benchmark -benchmem -benchtime=50ms -count=5
 goos: darwin
 goarch: arm64
-pkg: github.com/faustbrian/golib/pkg/cli
+pkg: github.com/faustbrian/go-cli
 cpu: Apple M4 Max
 BenchmarkCompileSmallTree-16      	    7010	      8531 ns/op	   22888 B/op	     110 allocs/op
 BenchmarkCompileSmallTree-16      	    8143	      8260 ns/op	   22888 B/op	     110 allocs/op
@@ -84,12 +84,12 @@ BenchmarkExecutionScenarios/cancellation-16        	  141366	       518.6 ns/op	
 BenchmarkExecutionScenarios/cancellation-16        	  143010	       432.2 ns/op	     232 B/op	       7 allocs/op
 BenchmarkExecutionScenarios/cancellation-16        	  139579	       434.5 ns/op	     232 B/op	       7 allocs/op
 PASS
-ok  	github.com/faustbrian/golib/pkg/cli	5.006s
+ok  	github.com/faustbrian/go-cli	5.006s
 
 # Comparison: GOWORK=off go test ./... -run '^$' -bench 'BenchmarkEquivalent(Construction|Dispatch)$' -benchmem -benchtime=50ms -count=10
 goos: darwin
 goarch: arm64
-pkg: github.com/faustbrian/golib/pkg/cli/benchmarks
+pkg: github.com/faustbrian/go-cli/benchmarks
 cpu: Apple M4 Max
 BenchmarkEquivalentConstruction/cli-16         	   39526	      1483 ns/op	    3808 B/op	      28 allocs/op
 BenchmarkEquivalentConstruction/cli-16         	   39178	      1501 ns/op	    3808 B/op	      28 allocs/op
@@ -192,12 +192,12 @@ BenchmarkEquivalentDispatch/flag-16               	  622621	       126.0 ns/op	 
 BenchmarkEquivalentDispatch/flag-16               	  404016	       135.0 ns/op	      24 B/op	       1 allocs/op
 BenchmarkEquivalentDispatch/flag-16               	  620887	        96.22 ns/op	      24 B/op	       1 allocs/op
 PASS
-ok  	github.com/faustbrian/golib/pkg/cli/benchmarks	8.558s
+ok  	github.com/faustbrian/go-cli/benchmarks	8.558s
 
 # Statistical summary: GOWORK=off go run golang.org/x/perf/cmd/benchstat@latest /tmp/cli-compare-bench.txt
 goos: darwin
 goarch: arm64
-pkg: github.com/faustbrian/golib/pkg/cli/benchmarks
+pkg: github.com/faustbrian/go-cli/benchmarks
 cpu: Apple M4 Max
                                         │ /tmp/cli-compare-bench.txt │
                                         │            sec/op             │

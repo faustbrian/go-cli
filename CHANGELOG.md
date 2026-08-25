@@ -7,12 +7,15 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-08-25
+
 ### Documentation
 
 - Link the package README to the repository-wide Golib documentation portal.
 
 ### Changed
 
+- Publish the module from its standalone `github.com/faustbrian/go-cli` identity while preserving its documented API and behavior.
 - Delegate local mutation checks to the canonical exact-100 repository runner
   and remove the superseded package-local Gremlins configuration.
 - Record PFlag as a direct dependency of the competitor benchmark harness and
@@ -182,3 +185,6 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   single-digit negative positional handling after boolean flags.
 - Established a 100% mutation-efficacy and 98.5% mutator-coverage release gate
   with explicit reviewed classifications for unexecuted constant mutations.
+
+[Unreleased]: https://github.com/faustbrian/go-cli/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/faustbrian/go-cli/releases/tag/v1.0.0

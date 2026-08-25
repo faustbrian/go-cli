@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	cli "github.com/faustbrian/golib/pkg/cli"
+	cli "github.com/faustbrian/go-cli"
 )
 
 func TestHelpAndVersionRequestsAreSuccessfulTypedResults(t *testing.T) {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/faustbrian/golib/pkg/cli/internal/engine"
+	"github.com/faustbrian/go-cli/internal/engine"
 )
 
 // CommandSet declares a bounded root command with direct executable children.

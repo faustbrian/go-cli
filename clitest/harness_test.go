@@ -6,8 +6,8 @@ import (
 	"io"
 	"testing"
 
-	cli "github.com/faustbrian/golib/pkg/cli"
-	"github.com/faustbrian/golib/pkg/cli/clitest"
+	cli "github.com/faustbrian/go-cli"
+	"github.com/faustbrian/go-cli/clitest"
 )
 
 func TestHarnessExecutesWithoutProcessGlobalMutation(t *testing.T) {

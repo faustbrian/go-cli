@@ -69,7 +69,7 @@ but do not make a third-party command object the permanent public contract.
 
 The core module path MUST be:
 
-`github.com/faustbrian/golib/pkg/cli`
+`github.com/faustbrian/go-cli`
 
 Optional integrations that materially increase dependencies SHOULD use nested
 modules. The core MUST keep a small, auditable dependency graph.

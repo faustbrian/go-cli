@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/alecthomas/kong"
-	framework "github.com/faustbrian/golib/pkg/cli"
+	framework "github.com/faustbrian/go-cli"
 	"github.com/spf13/cobra"
 	urfave "github.com/urfave/cli/v3"
 )

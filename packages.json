@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "repository": "github.com/faustbrian/go-cli",
+  "packages": [
+    {
+      "module_directory": ".",
+      "directory": ".",
+      "name": "cli",
+      "import_path": "github.com/faustbrian/go-cli",
+      "kind": "public",
+      "production": true,
+      "executable": true,
+      "coverage_required": true,
+      "build_required": true,
+      "build_tags": []
+    },
+    {
+      "module_directory": ".",
+      "directory": "clitest",
+      "name": "clitest",
+      "import_path": "github.com/faustbrian/go-cli/clitest",
+      "kind": "test support",
+      "production": false,
+      "executable": true,
+      "coverage_required": false,
+      "build_required": true,
+      "build_tags": []
+    },
+    {
+      "module_directory": ".",
+      "directory": "cmd/generate-reference",
+      "name": "main",
+      "import_path": "github.com/faustbrian/go-cli/cmd/generate-reference",
+      "kind": "tooling",
+      "production": false,
+      "executable": true,
+      "coverage_required": false,
+      "build_required": true,
+      "build_tags": []
+    },
+    {
+      "module_directory": ".",
+      "directory": "cmd/process-fixture",
+      "name": "main",
+      "import_path": "github.com/faustbrian/go-cli/cmd/process-fixture",
+      "kind": "tooling",
+      "production": false,
+      "executable": true,
+      "coverage_required": false,
+      "build_required": true,
+      "build_tags": []
+    },
+    {
+      "module_directory": ".",
+      "directory": "internal/engine",
+      "name": "engine",
+      "import_path": "github.com/faustbrian/go-cli/internal/engine",
+      "kind": "internal",
+      "production": true,
+      "executable": true,
+      "coverage_required": true,
+      "build_required": true,
+      "build_tags": []
+    },
+    {
+      "module_directory": ".",
+      "directory": "internal/referenceapp",
+      "name": "referenceapp",
+      "import_path": "github.com/faustbrian/go-cli/internal/referenceapp",
+      "kind": "tooling",
+      "production": false,
+      "executable": true,
+      "coverage_required": false,
+      "build_required": true,
+      "build_tags": []
+    }
+  ]
+}

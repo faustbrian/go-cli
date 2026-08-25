@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	cli "github.com/faustbrian/golib/pkg/cli"
+	cli "github.com/faustbrian/go-cli"
 )
 
 func TestLifecycleRunsInDeterministicOrder(t *testing.T) {

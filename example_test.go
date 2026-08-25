@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 
-	cli "github.com/faustbrian/golib/pkg/cli"
+	cli "github.com/faustbrian/go-cli"
 )
 
 func ExampleApplication_Run() {

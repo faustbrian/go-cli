@@ -11,7 +11,7 @@ func TestRequiredDocumentationSetIsPresentAndSubstantive(t *testing.T) {
 
 	required := map[string][]string{
 		"README.md": {
-			"go get github.com/faustbrian/golib/pkg/cli",
+			"go get github.com/faustbrian/go-cli",
 			"Why explicit commands?",
 			"ECS",
 		},
