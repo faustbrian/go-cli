@@ -89,7 +89,7 @@
       "family_label": "Tooling",
       "family_description": "Static policy, command construction, and interactive terminal behavior.",
       "family_order": 9,
-      "version": "v1.0.0",
+      "version": "1.0.0",
       "tag_prefix": "v",
       "owned_dependencies": [],
       "reverse_owned_dependencies": [
@@ -99,7 +99,7 @@
         "github.com/faustbrian/go-kafka/kafkaservice",
         "github.com/faustbrian/go-lease",
         "github.com/faustbrian/go-migrations",
-        "github.com/faustbrian/go-postgresql",
+        "github.com/faustbrian/go-postgres",
         "github.com/faustbrian/go-queue/queueservice",
         "github.com/faustbrian/go-scheduler",
         "github.com/faustbrian/go-service",
