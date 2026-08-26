@@ -7,6 +7,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Documentation
+
+- Replace archived monorepo links and the dated implementation audit with
+  package-owned documentation.
+
 ## [1.0.0] - 2026-08-25
 
 ### Changed

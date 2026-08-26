@@ -162,23 +162,9 @@ working directory, signal handlers, terminal state, or global registries.
 
 ## Documentation
 
-- [Architecture and lifecycle](docs/architecture.md)
-- [Construction and typed input](docs/commands.md)
-- [Parsing contract](docs/parsing.md)
-- [Output contract](docs/output.md)
-- [Errors, exits, cancellation, and signals](docs/errors-and-shutdown.md)
-- [Help, completion, and generated references](docs/generation.md)
-- [Operations and deployment recipes](docs/operations.md)
-- [Optional ecosystem composition](docs/integrations.md)
-- [Migration guides](docs/migrations.md)
-- [Security](docs/security.md)
-- [Performance](docs/performance.md)
-- [Mutation testing](docs/mutation.md)
-- [Compatibility and releases](docs/compatibility.md)
-- [Release artifacts and provenance](docs/release.md)
-- [Troubleshooting and FAQ](docs/troubleshooting.md)
-- [Intentional limitations](docs/limitations.md)
-- [2026-07-22 hardening audit](docs/audit/2026-07-22-hardening.md)
+Start with the [documentation index](docs/README.md). Read the
+[architecture](docs/architecture.md), [security guide](docs/security.md), and
+[limitations](docs/limitations.md) before building shared command surfaces.
 
 ## Security note
 
@@ -198,8 +184,3 @@ handler runs and can be read concurrently for help and completion.
 ## License
 
 MIT
-
-## Ecosystem
-
-Use the [Golib documentation portal](https://github.com/faustbrian/golib/blob/main/docs/index.md)
-to choose companion packages, supported stacks, recipes, and operations guidance.
