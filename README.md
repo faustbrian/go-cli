@@ -148,6 +148,4 @@ Commands stay visible in the application composition root without global
 registration, reflection-driven discovery, hidden injection, or background
 goroutines.
 
-## License
-
-MIT
+Licensed under the [MIT License](LICENSE).
