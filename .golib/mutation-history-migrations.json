@@ -42,26 +42,6 @@
       "module": ".",
       "package": "internal/engine",
       "report_sha256": "40852dd09b9ea22ad9f93f210919db254425f6ce2510c32068f51c06a3adea43"
-    },
-    {
-      "module": ".",
-      "package": ".",
-      "execution_revision": "c09c5268b1facb88317f933913b2e7cf4377948b",
-      "gate_input_digest": "d878194b188c892581c1638823167e37b79c97efd761c2dad0c84ef6c63ba8ee",
-      "replacement_gate_input_digest": "6d8661f775ec3abf1c2a79298fae156131d678162ff3e1babfe67698fbc77a0a",
-      "gremlins_version": "v0.6.0",
-      "gremlins_verifier_sha256": "9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
-      "report_sha256": "7c59b5d33cbe12bbf53e4e601a47c180e72b3ee8693281e6414f751dda28f66a"
-    },
-    {
-      "module": ".",
-      "package": "internal/engine",
-      "execution_revision": "c09c5268b1facb88317f933913b2e7cf4377948b",
-      "gate_input_digest": "7d6018ab9ef2a3b1194311c46791907e2838fdf41aa2b3870e29a43b85a781ea",
-      "replacement_gate_input_digest": "44bd18a799887bce50e1841632287671fa943ddf429d6ef0488681344109d74e",
-      "gremlins_version": "v0.6.0",
-      "gremlins_verifier_sha256": "9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
-      "report_sha256": "f153c7235b66bcee10e65d9ccb8a9ce31f402b194d5c96293a2e9403a8daf58b"
     }
   ]
 }
