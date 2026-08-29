@@ -108,26 +108,9 @@ func NewRepairCommand(repository *Repository) *cli.Command {
 
 ## Typed input
 
-Arguments and options are bindings captured by handlers, not string keys:
-
-```go
-limit := cli.IntOption("limit").Default(100)
-format := cli.EnumOption("format", "human", "json").Default("human")
-source := cli.StringArgument("source")
-
-command := cli.NewCommand("import",
-	cli.WithOptions(limit, format),
-	cli.WithArguments(source),
-	cli.WithHandler(func(ctx context.Context, invocation cli.Invocation) error {
-		input := invocation.Input()
-		return importFile(ctx, source.Get(input), limit.Get(input), format.Get(input))
-	}),
-)
-```
-
-`State` distinguishes omitted, defaulted, and explicit values, including
-explicit empty strings, zero, and false. Custom domain types use `TypedOption`
-or `TypedArgument`; parser implementation types never cross the public boundary.
+Arguments and options use typed bindings rather than string keys. The parser
+preserves omitted, defaulted, and explicit values; custom domain types use
+`TypedOption` or `TypedArgument`. See [parsing](docs/parsing.md).
 
 ## Execution modes
 
@@ -138,47 +121,19 @@ declared with `InteractionRequired` from reaching side effects.
 
 ## Help, completion, and references
 
-```go
-plain, _ := application.Help([]string{"import"}, cli.HelpOptions{Width: 80})
-markdown, _ := application.Markdown()
-manifest, _ := application.ManifestJSON()
-bash, _ := application.Completion(cli.ShellBash)
-```
-
-Bash, Zsh, Fish, and PowerShell scripts are returned as data. The package never
-edits shell configuration. Dynamic candidates require an explicit provider and
-are bounded and cancellation-aware.
+Help, Markdown references, manifests, and Bash, Zsh, Fish, and PowerShell
+completion are generated as data without editing shell configuration. See
+[generation](docs/generation.md).
 
 ## Testing
 
-```go
-execution := clitest.Run(t, application, []string{"import", "fixture.csv"})
-execution.AssertSuccess(t)
-execution.AssertStdout(t, "imported\n")
-```
-
-The harness does not mutate `os.Args`, process streams, the environment,
-working directory, signal handlers, terminal state, or global registries.
+The `clitest` harness runs commands without mutating process-global state. See
+[commands](docs/commands.md) for examples.
 
 ## Documentation
 
-- [Architecture and lifecycle](docs/architecture.md)
-- [Construction and typed input](docs/commands.md)
-- [Parsing contract](docs/parsing.md)
-- [Output contract](docs/output.md)
-- [Errors, exits, cancellation, and signals](docs/errors-and-shutdown.md)
-- [Help, completion, and generated references](docs/generation.md)
-- [Operations and deployment recipes](docs/operations.md)
-- [Optional ecosystem composition](docs/integrations.md)
-- [Migration guides](docs/migrations.md)
-- [Security](docs/security.md)
-- [Performance](docs/performance.md)
-- [Mutation testing](docs/mutation.md)
-- [Compatibility and releases](docs/compatibility.md)
-- [Release artifacts and provenance](docs/release.md)
-- [Troubleshooting and FAQ](docs/troubleshooting.md)
-- [Intentional limitations](docs/limitations.md)
-- [2026-07-22 hardening audit](docs/audit/2026-07-22-hardening.md)
+Use the [documentation index](docs/README.md) for architecture, parsing,
+output, integrations, operations, security, and migration guidance.
 
 ## Security note
 
@@ -187,19 +142,9 @@ metadata, and orchestration APIs. Mark secret bindings with `Secret()` for
 framework redaction, but prefer stdin, files with application-owned policy, or
 an explicit secret provider. See [the security guide](docs/security.md).
 
-## Why explicit commands?
+## Explicit composition
 
-Commands remain visible in the application composition root. There is no
-package-global registry, reflection-driven discovery, hidden dependency
-injection, environment lookup, working-directory lookup, shell evaluation, or
-background command goroutine. The resulting graph can be validated before any
-handler runs and can be read concurrently for help and completion.
-
-## License
-
-MIT
-
-## Ecosystem
-
-Use the [Golib documentation portal](https://github.com/faustbrian/golib/blob/main/docs/index.md)
-to choose companion packages, supported stacks, recipes, and operations guidance.
+Commands stay visible in the application composition root without global
+registration, reflection-driven discovery, hidden injection, or background
+goroutines.
+Licensed under the [MIT License](LICENSE).

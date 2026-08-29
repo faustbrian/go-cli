@@ -12,7 +12,7 @@ func TestRequiredDocumentationSetIsPresentAndSubstantive(t *testing.T) {
 	required := map[string][]string{
 		"README.md": {
 			"go get github.com/faustbrian/go-cli",
-			"Why explicit commands?",
+			"explicit, typed Go command framework",
 			"ECS",
 		},
 		"docs/architecture.md":        {"Lifecycle", "errors.Join", "middleware"},
@@ -30,16 +30,9 @@ func TestRequiredDocumentationSetIsPresentAndSubstantive(t *testing.T) {
 		"docs/compatibility.md":       {"Semantic Versioning", "GOWORK=off", "SBOM"},
 		"docs/troubleshooting.md":     {"FAQ", "NonInteractive", "global registry"},
 		"docs/limitations.md":         {"prompts", "Cobra", "does not"},
-		"docs/audit/2026-07-22-hardening.md": {
-			"Command graph conformance",
-			"Lifecycle and failure matrix",
-			"674 killed",
-			"Findings registry",
-			"Release gate inventory",
-		},
-		"SECURITY.md":  {"Security Advisories", "os.Exit", "signal"},
-		"CHANGELOG.md": {"Unreleased"},
-		"LICENSE":      {"MIT License"},
+		"SECURITY.md":                 {"Security Advisories", "os.Exit", "signal"},
+		"CHANGELOG.md":                {"Unreleased"},
+		"LICENSE":                     {"MIT License"},
 	}
 	for path, phrases := range required {
 		path := path

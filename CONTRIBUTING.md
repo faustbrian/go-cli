@@ -48,6 +48,19 @@ make ci
 The full scheduled and release gate is `make ci`. Report every unavailable or
 failing command; do not describe partial results as release-ready.
 
+## Shared Tooling
+
+Local verification uses the released `golib` v1.0.4 binary declared in
+`.golib.yaml`. Put that binary on `PATH`, or set `GOLIB` to its path, before
+running the repository checks. The repository-owned `verification/package.mk`
+contains only the nested benchmark and generated-documentation checks that
+cannot be represented by the shared tool's direct operations.
+
+Mutation checkpoints under `.verification/mutation/` are source-specific
+evidence. Do not rerun an approved campaign solely because repository history
+or tooling paths changed; the shared tool reuses it only when its complete
+content and verifier identities match.
+
 ## Adding A Module
 
 Follow [repository structure policy](AGENTS.md#repository-structure). New modules
