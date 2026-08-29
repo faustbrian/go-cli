@@ -2,6 +2,7 @@ package cli_test
 
 import (
 	"bytes"
+	"context"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -15,7 +16,7 @@ func TestArchitectureKeepsEngineAndRuntimeDetailsInternal(t *testing.T) {
 	t.Parallel()
 
 	fset := token.NewFileSet()
-	sourceFiles, err := exec.Command("git", "ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", "*.go").Output()
+	sourceFiles, err := exec.CommandContext(context.Background(), "git", "ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", "*.go").Output()
 	if err != nil {
 		t.Fatalf("enumerate repository source files: %v", err)
 	}

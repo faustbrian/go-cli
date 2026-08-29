@@ -15,6 +15,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Retain the benchmark harness checksum for the content-identical root module
   archive supplied by the verified bootstrap proxy instead of the divergent
   public v1.0.0 archive.
+- Bound architecture source checks to tracked and non-ignored repository Go
+  files while excluding hosted tooling and verification artifacts, and retain
+  the approved mutation reports through explicit replacement input identities.
 
 ### Documentation
 

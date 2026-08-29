@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "repository": "github.com/faustbrian/go-cli",
+  "module": ".",
+  "package": "internal/engine",
+  "gate": "mutation",
+  "input_digest": "sha256:22fd4179ce78502f9a6dfd3d7a929fae453f445eca7247d4db4fcc342e1e179f",
+  "verifier_digest": "sha256:9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+  "result": "passed",
+  "report_digest": "sha256:f153c7235b66bcee10e65d9ccb8a9ce31f402b194d5c96293a2e9403a8daf58b",
+  "environment": {
+    "CGO_ENABLED": "1",
+    "GOARCH": "arm64",
+    "GOOS": "darwin",
+    "GOVERSION": "go1.26.6",
+    "evidence_origin": "approved_legacy_checkpoint"
+  },
+  "completed_at": "2026-08-29T04:02:29.142799Z"
+}
