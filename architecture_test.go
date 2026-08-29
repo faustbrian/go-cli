@@ -1,11 +1,11 @@
 package cli_test
 
 import (
+	"bytes"
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"os"
-	"path/filepath"
+	"os/exec"
 	"strconv"
 	"strings"
 	"testing"
@@ -15,27 +15,26 @@ func TestArchitectureKeepsEngineAndRuntimeDetailsInternal(t *testing.T) {
 	t.Parallel()
 
 	fset := token.NewFileSet()
-	err := filepath.WalkDir(".", func(path string, entry os.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			return walkErr
-		}
-		if entry.IsDir() {
-			if path == "benchmarks" || path == ".git" {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-		if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
-			return nil
+	sourceFiles, err := exec.Command("git", "ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", "*.go").Output()
+	if err != nil {
+		t.Fatalf("enumerate repository source files: %v", err)
+	}
+	for _, rawPath := range bytes.Split(sourceFiles, []byte{0}) {
+		path := string(rawPath)
+		if path == "" || strings.HasPrefix(path, "benchmarks/") ||
+			strings.HasPrefix(path, ".golib-tooling/") ||
+			strings.HasPrefix(path, ".verification/") ||
+			strings.HasSuffix(path, "_test.go") {
+			continue
 		}
 		file, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
 		if err != nil {
-			return err
+			t.Fatalf("parse %s: %v", path, err)
 		}
 		for _, imported := range file.Imports {
 			name, err := strconv.Unquote(imported.Path.Value)
 			if err != nil {
-				return err
+				t.Fatalf("unquote import in %s: %v", path, err)
 			}
 			if strings.HasPrefix(name, "github.com/spf13/") ||
 				strings.HasPrefix(name, "github.com/urfave/cli") ||
@@ -57,9 +56,5 @@ func TestArchitectureKeepsEngineAndRuntimeDetailsInternal(t *testing.T) {
 				t.Errorf("%s contains forbidden go:linkname directive", path)
 			}
 		}
-		return nil
-	})
-	if err != nil {
-		t.Fatal(err)
 	}
 }
