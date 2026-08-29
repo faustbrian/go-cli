@@ -7,6 +7,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed
+
+- Replace copied repository verification tooling with the pinned
+  `go-library-tools` v1.0.4 contract while retaining source-specific mutation
+  evidence and package verification policy.
+- Reconcile the benchmark module checksum with the current `go-cli` v1.0.0
+  module archive without changing the benchmark module's dependency version.
+
 ### Documentation
 
 - Replace archived monorepo links and the dated implementation audit with
