@@ -12,8 +12,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Replace copied repository verification tooling with the pinned
   `go-library-tools` v1.0.4 contract while retaining source-specific mutation
   evidence and package verification policy.
-- Reconcile the benchmark module checksum with the current `go-cli` v1.0.0
-  module archive without changing the benchmark module's dependency version.
+- Resolve the benchmark harness's owned dependency to the current root module
+  so isolated checks do not consume a divergent public v1.0.0 archive.
 
 ### Documentation
 
