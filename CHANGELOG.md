@@ -10,7 +10,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Changed
 
 - Replace copied repository verification tooling with the pinned
-  `go-library-tools` v1.0.4 contract while retaining source-specific mutation
+  `go-library-tools` v1.0.13 contract while retaining source-specific mutation
   evidence and package verification policy.
 - Retain the benchmark harness checksum for the content-identical root module
   archive supplied by the verified bootstrap proxy instead of the divergent
