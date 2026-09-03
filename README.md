@@ -21,13 +21,17 @@ harness. It deliberately does not provide a service container, reflection-based
 discovery, global registration, configuration loading, prompts, logging, or
 telemetry exporters.
 
+For ecosystem-wide package selection, construction, ownership, and lifecycle
+guidance, see the versioned [Golib ecosystem index](https://github.com/faustbrian/go-library-tools/blob/v1.3.0/docs/ecosystem/README.md)
+and its [Tooling family guidance](https://github.com/faustbrian/go-library-tools/blob/v1.3.0/docs/ecosystem/design-language.md#package-families-and-selection).
+
 ## Install
 
 ```sh
 go get github.com/faustbrian/go-cli
 ```
 
-Go 1.25 or newer is required.
+Go 1.26.6 or newer is required.
 
 ## Minimal command
 
