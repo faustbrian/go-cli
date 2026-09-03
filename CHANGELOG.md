@@ -9,9 +9,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
-- Replace copied repository verification tooling with the pinned
-  `go-library-tools` v1.0.13 contract while retaining source-specific mutation
-  evidence and package verification policy.
+- Publish schema-v2 cohesion metadata for the CLI framework, command
+  construction, lifecycle, output, and test-support entry points.
+- Adopt the checksum-verified `go-library-tools` v1.3.0 CLI, expose the local
+  `make cohesion` gate, and pin reusable-workflow cohesion enforcement to its
+  final immutable revision.
 - Retain the benchmark harness checksum for the content-identical root module
   archive supplied by the verified bootstrap proxy instead of the divergent
   public v1.0.0 archive.
@@ -21,6 +23,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Documentation
 
+- Link consumers to the immutable v1.3.0 Golib ecosystem index and Tooling
+  package-family guidance, and align the README's minimum Go version with the
+  module contract.
 - Replace archived monorepo links and the dated implementation audit with
   package-owned documentation.
 
