@@ -9,6 +9,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Upgrade the checksum-verified CLI and immutable shared workflow to
+  `go-library-tools` v1.4.0, enforce online specification validation in local
+  CI, and retain the schema-v2 cohesion contract.
+- Resolve the benchmark harness through the canonical public v1.0.0 archive,
+  superseding its bootstrap-proxy checksum retention.
 - Publish schema-v2 cohesion metadata for the CLI framework, command
   construction, lifecycle, output, and test-support entry points.
 - Adopt the checksum-verified `go-library-tools` v1.3.0 CLI, expose the local
@@ -23,6 +28,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Documentation
 
+- Link consumers to the immutable v1.4.0 ecosystem index and Tooling family
+  guidance.
 - Link consumers to the immutable v1.3.0 Golib ecosystem index and Tooling
   package-family guidance, and align the README's minimum Go version with the
   module contract.
