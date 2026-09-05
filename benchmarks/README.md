@@ -43,16 +43,17 @@ following implementation-specific work:
 | Case | Timed construction | Timed dispatch iteration |
 | --- | --- | --- |
 | `go-cli` | Create typed bindings and command definitions, then call `Compile` for validation and immutable runtime preparation. | Recursively rebuild the engine command representation, parse and resolve typed input, run the registered validation plus the normal lifecycle and empty-cleanup path, and invoke the handler. `SetData` marshals the result, creates its human representation, and enforces bounds under synchronization; finalization snapshots that state and marshals the complete `go-cli/v1` envelope. |
-| Cobra | Allocate and configure the command tree, register the flag, and link the child. This does not complete runtime setup. | Reset the flag value and `Changed` state, assign argv, and call `ExecuteContext`. The first iteration adds default help, completion, and help-flag state; every iteration performs default-help remove/add work and command-group checks before parsing. Cobra applies `ExactArgs(1)`, the action checks the flag and target, and the action encodes the raw result once. |
+| Cobra | Allocate and configure the command tree, register the flag, and link the child. This does not complete runtime setup. | Reset the flag value and `Changed` state, assign argv, and call `ExecuteContext`. The first iteration adds persistent default help, completion, and help-flag state. Every iteration also constructs a hidden completion-request command, adds it to the tree, searches the tree, and removes it for this non-completion request; it performs default-help remove/add work and command-group checks before parsing. Cobra applies `ExactArgs(1)`, the action checks the flag and target, and the action encodes the raw result once. |
 | `urfave/cli` | Allocate command and flag definitions without running their operational setup. | Allocate a fresh argv slice and call `Run`. First-run defaults are retained, while command-graph setup runs on every call; parsing then reaches an action that checks the flag, argument count, and target and encodes the raw result once. |
 | Kong | Call `kong.New`, including reflection-driven parser and model preparation. | Clear the reusable model, then run Kong's Trace, Reset, Resolve, Apply, and Validate pipeline. The harness checks the populated fields and encodes the raw result once. |
 | `flag` | Create a `FlagSet` and register one Boolean flag; there is no command graph. | Check the command token, reset the Boolean value, parse the remaining arguments, validate the flag and positional value, and encode the raw result once in the harness. |
 
 The measurements therefore include different construction phases, validation
 locations, first-run effects, lifecycle work, output shapes, and framework
-guarantees. Optional lifecycle hooks, cleanup handlers, completion, failure
-paths, diagnostics, concurrency, and broader application integration remain
-outside this narrow fixture.
+guarantees. Optional lifecycle hooks, cleanup handlers, completion-request
+execution and generated completion output, failure paths, diagnostics,
+concurrency, and broader application integration remain outside this narrow
+fixture.
 
 The differential parser test compares the owned parser with the former Cobra
 adapter across options, aliases, nesting, negative values, help, version, and

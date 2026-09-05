@@ -2,7 +2,7 @@
 
 Correctness, stable semantics, startup safety, and bounded work outrank
 headline benchmarks. The comparative harness measures construction and
-prepared dispatch separately for one matched command fixture. It is not an
+dispatch separately for one matched command fixture. It is not an
 equivalent-work comparison: each library performs implementation-specific
 setup, validation, and output work.
 
@@ -13,10 +13,12 @@ cancellation; and repeated in-process allocation behavior.
 
 Construction includes `cli.Compile` and `kong.New`; the Cobra, `urfave/cli`,
 and `flag` cases allocate definitions but defer different amounts of work.
-Dispatch is not uniformly prepared. `cli` rebuilds an engine command before
+The reusable objects are constructed before the dispatch loop but retain
+different amounts of initialized state. `cli` rebuilds an engine command before
 fresh parsing and then runs typed validation, its normal lifecycle and cleanup
 path, `SetData`, and complete envelope rendering. Cobra resets flag state and
-argv, then performs first-run and repeated `ExecuteContext` setup before its
+argv, then performs first-run setup; every `ExecuteContext` also constructs,
+adds, searches for, and removes a hidden completion-request command before its
 argument check, action validation, and raw-result encoding. `urfave/cli`
 allocates argv on every iteration, retains first-run defaults, rebuilds command
 graph state on every `Run`, and validates and encodes in its action. Kong clears

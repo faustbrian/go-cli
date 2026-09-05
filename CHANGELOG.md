@@ -125,9 +125,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   release their derived cancellation context without waiting for a signal.
 - Expanded fuzzing across lifecycle failure and cancellation, help and
   reference generation, JSON and terminal rendering, and adapter translation.
-- Split comparative construction from prepared dispatch, made validation and
-  JSON output equivalent, and added broad, deep, maximum, failure, suggestion,
-  conversion, output, and cancellation benchmarks.
+- Split comparative construction from dispatch, documented the asymmetric
+  setup and output work in the matched fixture, and added broad, deep, maximum,
+  failure, suggestion, conversion, output, and cancellation benchmarks.
 - Completed enum values for separate, assigned, and attached option forms and
   arguments while redacting secret enum sets from every discovery surface.
 - Added a built subprocess fixture proving JSON integrity, portable success and
