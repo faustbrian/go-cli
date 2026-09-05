@@ -29,7 +29,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Documentation
 
 - Document the internal, non-releasable benchmark harness, its matched-fixture
-  limitations, per-library timed work, lifecycle and output differences,
+  limitations, per-library timed and first-run work, lifecycle and output
+  differences, historical evidence status, unenforced budget targets,
   reproducible commands, and engineering-only navigation.
 - Link consumers to the immutable v1.4.0 ecosystem index and Tooling family
   guidance.

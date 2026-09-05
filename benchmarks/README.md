@@ -37,43 +37,22 @@ fastest run.
 
 The cases share the `deploy --force target` fixture and check the same Boolean
 and positional values. This is a matched scenario, not an equivalent-work
-benchmark:
+benchmark. The construction benchmark and each dispatch iteration include the
+following implementation-specific work:
 
-- `go-cli` construction creates bindings and command definitions and calls
-  `Compile`, including its validation and immutable runtime preparation.
-- Cobra construction allocates its command tree, registers the flag, and links
-  the child command.
-- `urfave/cli` construction allocates command and flag definitions but defers
-  operational preparation until `Run`.
-- Kong construction includes `kong.New` and its reflection-driven parser and
-  model preparation.
-- `flag` construction creates a `FlagSet` and registers one Boolean flag; it
-  has no command graph.
-
-Dispatch reuses the value prepared before the timed loop, but each case still
-performs different work:
-
-- `go-cli` parses and resolves typed input, runs the registered validation and
-  its normal lifecycle and cleanup pipeline, and invokes the handler. `SetData`
-  marshals the result, creates its human representation, and enforces output
-  bounds under synchronization. Finalization snapshots that state and marshals
-  the complete `go-cli/v1` response envelope.
-- Cobra parses the command and flag, applies `ExactArgs(1)`, validates the flag
-  and target in the action, and encodes the raw result once.
-- `urfave/cli` performs its deferred preparation and parsing in `Run`, validates
-  the flag, argument count, and target in the action, and encodes the raw result
-  once.
-- Kong parses into its model, after which the harness validates the fields and
-  encodes the raw result once.
-- `flag` checks the command token in the harness, parses the remaining
-  arguments, validates the flag and positional value in the harness, and
-  encodes the raw result once.
+| Case | Timed construction | Timed dispatch iteration |
+| --- | --- | --- |
+| `go-cli` | Create typed bindings and command definitions, then call `Compile` for validation and immutable runtime preparation. | Recursively rebuild the engine command representation, parse and resolve typed input, run the registered validation plus the normal lifecycle and empty-cleanup path, and invoke the handler. `SetData` marshals the result, creates its human representation, and enforces bounds under synchronization; finalization snapshots that state and marshals the complete `go-cli/v1` envelope. |
+| Cobra | Allocate and configure the command tree, register the flag, and link the child. This does not complete runtime setup. | Reset the flag value and `Changed` state, assign argv, and call `ExecuteContext`. The first iteration adds default help, completion, and help-flag state; every iteration performs default-help remove/add work and command-group checks before parsing. Cobra applies `ExactArgs(1)`, the action checks the flag and target, and the action encodes the raw result once. |
+| `urfave/cli` | Allocate command and flag definitions without running their operational setup. | Allocate a fresh argv slice and call `Run`. First-run defaults are retained, while command-graph setup runs on every call; parsing then reaches an action that checks the flag, argument count, and target and encodes the raw result once. |
+| Kong | Call `kong.New`, including reflection-driven parser and model preparation. | Clear the reusable model, then run Kong's Trace, Reset, Resolve, Apply, and Validate pipeline. The harness checks the populated fields and encodes the raw result once. |
+| `flag` | Create a `FlagSet` and register one Boolean flag; there is no command graph. | Check the command token, reset the Boolean value, parse the remaining arguments, validate the flag and positional value, and encode the raw result once in the harness. |
 
 The measurements therefore include different construction phases, validation
-locations, lifecycle work, output shapes, and framework guarantees. Optional
-lifecycle hooks, cleanup handlers, completion, failure paths, diagnostics,
-concurrency, and broader application integration remain outside this narrow
-fixture.
+locations, first-run effects, lifecycle work, output shapes, and framework
+guarantees. Optional lifecycle hooks, cleanup handlers, completion, failure
+paths, diagnostics, concurrency, and broader application integration remain
+outside this narrow fixture.
 
 The differential parser test compares the owned parser with the former Cobra
 adapter across options, aliases, nesting, negative values, help, version, and
