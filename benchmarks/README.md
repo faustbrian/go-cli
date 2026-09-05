@@ -1,9 +1,10 @@
 # CLI benchmark harness
 
-This internal, non-releasable module compares equivalent command construction
-and prepared dispatch across `go-cli`, Cobra, `urfave/cli`, Kong, and the
-standard `flag` package. It also preserves differential parser evidence against
-the former Cobra-backed implementation.
+This internal, non-releasable module measures a matched command fixture across
+`go-cli`, Cobra, `urfave/cli`, Kong, and the standard `flag` package. The
+implementations do not perform identical setup or output work, so the numbers
+must be interpreted with the differences below. The module also preserves
+differential parser evidence against the former Cobra-backed implementation.
 
 The module exists only for Golib engineering verification. It has no supported
 installation path, public package, semantic-version release, or runtime
@@ -34,21 +35,43 @@ fastest run.
 
 ## Comparison boundary
 
-Construction measures the setup performed by each library for the fixture.
-Dispatch reuses a prepared command graph, parses `deploy --force target`,
-validates equivalent inputs, encodes the same result as JSON, and writes it to
-`io.Discard`. The standard `flag` case is a parsing floor without a command
-graph. Differences in supported features, diagnostics, completion, lifecycle,
-concurrency guarantees, and application integration remain outside this
-narrow workload.
+The cases share the `deploy --force target` fixture and check the same Boolean
+and positional values. This is a matched scenario, not an equivalent-work
+benchmark:
+
+- `go-cli` construction creates bindings and command definitions and calls
+  `Compile`, including its validation and immutable runtime preparation.
+- Cobra construction allocates its command tree, registers the flag, and links
+  the child command.
+- `urfave/cli` construction allocates command and flag definitions but defers
+  operational preparation until `Run`.
+- Kong construction includes `kong.New` and its reflection-driven parser and
+  model preparation.
+- `flag` construction creates a `FlagSet` and registers one Boolean flag; it
+  has no command graph.
+
+Dispatch reuses the value prepared before the timed loop, but the output paths
+still differ. `go-cli` parses and validates through `Application.Run`; its
+handler calls `SetData`, after which the framework renders the complete
+`go-cli/v1` response envelope. Cobra and `urfave/cli` encode the raw result
+struct inside their actions. Kong parses into its model, then the harness
+validates the fields and encodes the raw result. The `flag` case checks the
+command token, parses the remaining arguments, validates them in the harness,
+and encodes the raw result.
+
+The measurements therefore include different construction phases, validation
+locations, output shapes, and framework guarantees. Completion, lifecycle,
+diagnostics, concurrency, and broader application integration also remain
+outside this narrow fixture.
 
 The differential parser test compares the owned parser with the former Cobra
 adapter across options, aliases, nesting, negative values, help, version, and
 failure categories. It is compatibility evidence, not a performance result.
 
-Do not use this harness as a universal framework ranking. Measure the actual
-command shape, output mode, lifecycle, concurrency, and correctness
-requirements of the application being built.
+Do not infer a universal framework ranking or a like-for-like efficiency ratio
+from the cross-library numbers. Measure the actual command shape, output mode,
+lifecycle, concurrency, and correctness requirements of the application being
+built.
 
 ## Navigation
 

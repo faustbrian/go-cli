@@ -28,8 +28,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Documentation
 
-- Document the internal, non-releasable benchmark harness, its equivalent-work
-  boundary, reproducible commands, and engineering-only navigation.
+- Document the internal, non-releasable benchmark harness, its matched-fixture
+  limitations, implementation-specific work, reproducible commands, and
+  engineering-only navigation.
 - Link consumers to the immutable v1.4.0 ecosystem index and Tooling family
   guidance.
 - Link consumers to the immutable v1.3.0 Golib ecosystem index and Tooling
