@@ -30,6 +30,7 @@
 
 - [Generated command reference](generated/commands.md)
 - [Compatibility](compatibility.md)
+- [Internal benchmark harness](../benchmarks/README.md)
 - [Mutation testing](mutation.md)
 - [Release process](release.md)
 - [Contribution guide](../CONTRIBUTING.md)
