@@ -50,19 +50,30 @@ benchmark:
 - `flag` construction creates a `FlagSet` and registers one Boolean flag; it
   has no command graph.
 
-Dispatch reuses the value prepared before the timed loop, but the output paths
-still differ. `go-cli` parses and validates through `Application.Run`; its
-handler calls `SetData`, after which the framework renders the complete
-`go-cli/v1` response envelope. Cobra and `urfave/cli` encode the raw result
-struct inside their actions. Kong parses into its model, then the harness
-validates the fields and encodes the raw result. The `flag` case checks the
-command token, parses the remaining arguments, validates them in the harness,
-and encodes the raw result.
+Dispatch reuses the value prepared before the timed loop, but each case still
+performs different work:
+
+- `go-cli` parses and resolves typed input, runs the registered validation and
+  its normal lifecycle and cleanup pipeline, and invokes the handler. `SetData`
+  marshals the result, creates its human representation, and enforces output
+  bounds under synchronization. Finalization snapshots that state and marshals
+  the complete `go-cli/v1` response envelope.
+- Cobra parses the command and flag, applies `ExactArgs(1)`, validates the flag
+  and target in the action, and encodes the raw result once.
+- `urfave/cli` performs its deferred preparation and parsing in `Run`, validates
+  the flag, argument count, and target in the action, and encodes the raw result
+  once.
+- Kong parses into its model, after which the harness validates the fields and
+  encodes the raw result once.
+- `flag` checks the command token in the harness, parses the remaining
+  arguments, validates the flag and positional value in the harness, and
+  encodes the raw result once.
 
 The measurements therefore include different construction phases, validation
-locations, output shapes, and framework guarantees. Completion, lifecycle,
-diagnostics, concurrency, and broader application integration also remain
-outside this narrow fixture.
+locations, lifecycle work, output shapes, and framework guarantees. Optional
+lifecycle hooks, cleanup handlers, completion, failure paths, diagnostics,
+concurrency, and broader application integration remain outside this narrow
+fixture.
 
 The differential parser test compares the owned parser with the former Cobra
 adapter across options, aliases, nesting, negative values, help, version, and

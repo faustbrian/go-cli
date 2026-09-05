@@ -14,11 +14,19 @@ cancellation; and repeated in-process allocation behavior.
 Construction includes `cli.Compile`, Cobra's command and flag registration,
 and `kong.New`. The `urfave/cli` construction case allocates definitions while
 deferring operational preparation until `Run`; standard `flag` has no command
-graph. During dispatch, `cli` uses `SetData` and renders its complete
-`go-cli/v1` envelope. Cobra and `urfave/cli` encode a raw result from their
-actions, while Kong and `flag` validate in the harness and encode the raw
-result there. Every case writes to `io.Discard`, but the encoded shapes and
-framework work differ.
+graph. During dispatch, `cli` parses and resolves typed input, runs its
+validation plus normal lifecycle and cleanup pipeline, and invokes the handler.
+`SetData` marshals the result, creates its human representation, and enforces
+bounds under synchronization; finalization snapshots the state and marshals
+the complete `go-cli/v1` envelope. Cobra parses its command and flag, applies
+`ExactArgs(1)`, validates in its action, and encodes one raw result.
+`urfave/cli` performs deferred preparation and parsing in `Run`, then validates
+and encodes one raw result in its action. Kong parses its model before harness
+validation and raw-result encoding. The `flag` case performs command checking,
+validation, and raw-result encoding in the harness. Every case writes to
+`io.Discard`, but the lifecycle work, encoded shapes, and framework guarantees
+differ. Optional lifecycle hooks and cleanup handlers are not configured in
+this fixture.
 
 Prepared `cli` dispatch builds fresh internal parser state to preserve
 concurrent and repeated invocation isolation. Direct Cobra dispatch reuses its
