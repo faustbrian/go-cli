@@ -1,0 +1,150 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/faustbrian/go-cli/benchmarks
+cpu: Apple M4 Max
+BenchmarkEquivalentColdInvocation/go-cli-16 	   43200	      2726 ns/op	    366784 invocations/s	    5420 B/op	      51 allocs/op
+BenchmarkEquivalentColdInvocation/cobra-16  	   41071	      2863 ns/op	    349296 invocations/s	    7417 B/op	      72 allocs/op
+BenchmarkEquivalentColdInvocation/urfave-cli-v3-16         	   27310	      4359 ns/op	    229406 invocations/s	    8474 B/op	     234 allocs/op
+BenchmarkEquivalentColdInvocation/kong-16                  	    7035	     15760 ns/op	     63451 invocations/s	   22804 B/op	     357 allocs/op
+BenchmarkEquivalentRepeatedInvocation/go-cli-16            	  121678	      1011 ns/op	    989377 invocations/s	    1579 B/op	      21 allocs/op
+BenchmarkEquivalentRepeatedInvocation/cobra-16             	   79954	      1481 ns/op	    675037 invocations/s	    1659 B/op	      31 allocs/op
+BenchmarkEquivalentRepeatedInvocation/urfave-cli-v3-16     	   35755	      3322 ns/op	    301036 invocations/s	    4474 B/op	     183 allocs/op
+BenchmarkEquivalentRepeatedInvocation/kong-16              	   15028	      7984 ns/op	    125252 invocations/s	    9429 B/op	     187 allocs/op
+BenchmarkParsingFloorFlag-16                               	 5426691	        22.16 ns/op	  45120762 invocations/s	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/faustbrian/go-cli/benchmarks	1.163s
+goos: darwin
+goarch: arm64
+pkg: github.com/faustbrian/go-cli/benchmarks
+cpu: Apple M4 Max
+BenchmarkEquivalentColdInvocation/go-cli-16 	   42577	      2758 ns/op	    362632 invocations/s	    5420 B/op	      51 allocs/op
+BenchmarkEquivalentColdInvocation/cobra-16  	   41857	      2874 ns/op	    347979 invocations/s	    7417 B/op	      72 allocs/op
+BenchmarkEquivalentColdInvocation/urfave-cli-v3-16         	   27764	      4306 ns/op	    232237 invocations/s	    8475 B/op	     234 allocs/op
+BenchmarkEquivalentColdInvocation/kong-16                  	    7104	     15589 ns/op	     64146 invocations/s	   22774 B/op	     357 allocs/op
+BenchmarkEquivalentRepeatedInvocation/go-cli-16            	  121309	       996.8 ns/op	   1003239 invocations/s	    1579 B/op	      21 allocs/op
+BenchmarkEquivalentRepeatedInvocation/cobra-16             	   78178	      1491 ns/op	    670771 invocations/s	    1659 B/op	      31 allocs/op
+BenchmarkEquivalentRepeatedInvocation/urfave-cli-v3-16     	   36476	      3299 ns/op	    303099 invocations/s	    4474 B/op	     183 allocs/op
+BenchmarkEquivalentRepeatedInvocation/kong-16              	   14667	      8825 ns/op	    113314 invocations/s	    9430 B/op	     187 allocs/op
+BenchmarkParsingFloorFlag-16                               	 4893580	        31.29 ns/op	  31960196 invocations/s	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/faustbrian/go-cli/benchmarks	1.208s
+goos: darwin
+goarch: arm64
+pkg: github.com/faustbrian/go-cli/benchmarks
+cpu: Apple M4 Max
+BenchmarkEquivalentColdInvocation/go-cli-16 	   36354	      3001 ns/op	    333230 invocations/s	    5420 B/op	      51 allocs/op
+BenchmarkEquivalentColdInvocation/cobra-16  	   22795	      4978 ns/op	    200884 invocations/s	    7420 B/op	      72 allocs/op
+BenchmarkEquivalentColdInvocation/urfave-cli-v3-16         	   26013	      4557 ns/op	    219450 invocations/s	    8475 B/op	     234 allocs/op
+BenchmarkEquivalentColdInvocation/kong-16                  	    6790	     29207 ns/op	     34239 invocations/s	   22845 B/op	     357 allocs/op
+BenchmarkEquivalentRepeatedInvocation/go-cli-16            	  114817	      1044 ns/op	    957814 invocations/s	    1579 B/op	      21 allocs/op
+BenchmarkEquivalentRepeatedInvocation/cobra-16             	   81806	      3667 ns/op	    272734 invocations/s	    1660 B/op	      31 allocs/op
+BenchmarkEquivalentRepeatedInvocation/urfave-cli-v3-16     	    7210	     15883 ns/op	     62961 invocations/s	    4472 B/op	     183 allocs/op
+BenchmarkEquivalentRepeatedInvocation/kong-16              	   10000	     29604 ns/op	     33779 invocations/s	    9432 B/op	     187 allocs/op
+BenchmarkParsingFloorFlag-16                               	 5226129	        75.72 ns/op	  13206703 invocations/s	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/faustbrian/go-cli/benchmarks	2.036s
+goos: darwin
+goarch: arm64
+pkg: github.com/faustbrian/go-cli/benchmarks
+cpu: Apple M4 Max
+BenchmarkEquivalentColdInvocation/go-cli-16 	   42394	      2771 ns/op	    360938 invocations/s	    5420 B/op	      51 allocs/op
+BenchmarkEquivalentColdInvocation/cobra-16  	   40870	     18577 ns/op	     53829 invocations/s	    7419 B/op	      72 allocs/op
+BenchmarkEquivalentColdInvocation/urfave-cli-v3-16         	   10000	     27904 ns/op	     35837 invocations/s	    8476 B/op	     234 allocs/op
+BenchmarkEquivalentColdInvocation/kong-16                  	    2870	    116425 ns/op	      8589 invocations/s	   22720 B/op	     357 allocs/op
+BenchmarkEquivalentRepeatedInvocation/go-cli-16            	   10000	     10781 ns/op	     92757 invocations/s	    1581 B/op	      21 allocs/op
+BenchmarkEquivalentRepeatedInvocation/cobra-16             	   10000	     10468 ns/op	     95525 invocations/s	    1661 B/op	      31 allocs/op
+BenchmarkEquivalentRepeatedInvocation/urfave-cli-v3-16     	    5605	     17844 ns/op	     56041 invocations/s	    4476 B/op	     183 allocs/op
+BenchmarkEquivalentRepeatedInvocation/kong-16              	   10000	     39927 ns/op	     25046 invocations/s	    9431 B/op	     187 allocs/op
+BenchmarkParsingFloorFlag-16                               	 4956031	        75.41 ns/op	  13260563 invocations/s	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/faustbrian/go-cli/benchmarks	2.857s
+goos: darwin
+goarch: arm64
+pkg: github.com/faustbrian/go-cli/benchmarks
+cpu: Apple M4 Max
+BenchmarkEquivalentColdInvocation/go-cli-16 	   27998	      3926 ns/op	    254688 invocations/s	    5420 B/op	      51 allocs/op
+BenchmarkEquivalentColdInvocation/cobra-16  	   39882	      3023 ns/op	    330827 invocations/s	    7417 B/op	      72 allocs/op
+BenchmarkEquivalentColdInvocation/urfave-cli-v3-16         	   14260	      7309 ns/op	    136816 invocations/s	    8475 B/op	     234 allocs/op
+BenchmarkEquivalentColdInvocation/kong-16                  	    6798	     19143 ns/op	     52237 invocations/s	   22888 B/op	     357 allocs/op
+BenchmarkEquivalentRepeatedInvocation/go-cli-16            	  114410	      1199 ns/op	    833773 invocations/s	    1579 B/op	      21 allocs/op
+BenchmarkEquivalentRepeatedInvocation/cobra-16             	   80606	      1531 ns/op	    652978 invocations/s	    1660 B/op	      31 allocs/op
+BenchmarkEquivalentRepeatedInvocation/urfave-cli-v3-16     	   36081	      3345 ns/op	    298928 invocations/s	    4474 B/op	     183 allocs/op
+BenchmarkEquivalentRepeatedInvocation/kong-16              	   14581	      8181 ns/op	    122240 invocations/s	    9430 B/op	     187 allocs/op
+BenchmarkParsingFloorFlag-16                               	 5432670	        22.19 ns/op	  45066229 invocations/s	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/faustbrian/go-cli/benchmarks	1.195s
+goos: darwin
+goarch: arm64
+pkg: github.com/faustbrian/go-cli/benchmarks
+cpu: Apple M4 Max
+BenchmarkEquivalentColdInvocation/go-cli-16 	   42382	      3200 ns/op	    312468 invocations/s	    5420 B/op	      51 allocs/op
+BenchmarkEquivalentColdInvocation/cobra-16  	   29520	      4371 ns/op	    228776 invocations/s	    7418 B/op	      72 allocs/op
+BenchmarkEquivalentColdInvocation/urfave-cli-v3-16         	   26955	      5054 ns/op	    197879 invocations/s	    8475 B/op	     234 allocs/op
+BenchmarkEquivalentColdInvocation/kong-16                  	    7063	     21425 ns/op	     46674 invocations/s	   22849 B/op	     357 allocs/op
+BenchmarkEquivalentRepeatedInvocation/go-cli-16            	  122934	      1005 ns/op	    995482 invocations/s	    1579 B/op	      21 allocs/op
+BenchmarkEquivalentRepeatedInvocation/cobra-16             	   79171	      1502 ns/op	    665643 invocations/s	    1659 B/op	      31 allocs/op
+BenchmarkEquivalentRepeatedInvocation/urfave-cli-v3-16     	   36256	      3318 ns/op	    301421 invocations/s	    4474 B/op	     183 allocs/op
+BenchmarkEquivalentRepeatedInvocation/kong-16              	   14340	      8284 ns/op	    120709 invocations/s	    9430 B/op	     187 allocs/op
+BenchmarkParsingFloorFlag-16                               	 5470314	        22.64 ns/op	  44173755 invocations/s	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/faustbrian/go-cli/benchmarks	1.244s
+goos: darwin
+goarch: arm64
+pkg: github.com/faustbrian/go-cli/benchmarks
+cpu: Apple M4 Max
+BenchmarkEquivalentColdInvocation/go-cli-16 	   42536	      2849 ns/op	    350981 invocations/s	    5420 B/op	      51 allocs/op
+BenchmarkEquivalentColdInvocation/cobra-16  	   42037	      2888 ns/op	    346210 invocations/s	    7417 B/op	      72 allocs/op
+BenchmarkEquivalentColdInvocation/urfave-cli-v3-16         	   26971	      4393 ns/op	    227634 invocations/s	    8475 B/op	     234 allocs/op
+BenchmarkEquivalentColdInvocation/kong-16                  	    7246	     22119 ns/op	     45211 invocations/s	   22817 B/op	     357 allocs/op
+BenchmarkEquivalentRepeatedInvocation/go-cli-16            	  108466	      1079 ns/op	    926468 invocations/s	    1579 B/op	      21 allocs/op
+BenchmarkEquivalentRepeatedInvocation/cobra-16             	   78500	      1487 ns/op	    672408 invocations/s	    1659 B/op	      31 allocs/op
+BenchmarkEquivalentRepeatedInvocation/urfave-cli-v3-16     	   34983	      3374 ns/op	    296357 invocations/s	    4474 B/op	     183 allocs/op
+BenchmarkEquivalentRepeatedInvocation/kong-16              	   14374	      8246 ns/op	    121272 invocations/s	    9429 B/op	     187 allocs/op
+BenchmarkParsingFloorFlag-16                               	 5277102	        26.43 ns/op	  37829457 invocations/s	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/faustbrian/go-cli/benchmarks	1.236s
+goos: darwin
+goarch: arm64
+pkg: github.com/faustbrian/go-cli/benchmarks
+cpu: Apple M4 Max
+BenchmarkEquivalentColdInvocation/go-cli-16 	   19094	      5274 ns/op	    189600 invocations/s	    5422 B/op	      51 allocs/op
+BenchmarkEquivalentColdInvocation/cobra-16  	   14074	      7228 ns/op	    138347 invocations/s	    7421 B/op	      72 allocs/op
+BenchmarkEquivalentColdInvocation/urfave-cli-v3-16         	   23830	      5216 ns/op	    191707 invocations/s	    8475 B/op	     234 allocs/op
+BenchmarkEquivalentColdInvocation/kong-16                  	    6942	     30023 ns/op	     33308 invocations/s	   22864 B/op	     357 allocs/op
+BenchmarkEquivalentRepeatedInvocation/go-cli-16            	  116684	      1493 ns/op	    670010 invocations/s	    1579 B/op	      21 allocs/op
+BenchmarkEquivalentRepeatedInvocation/cobra-16             	   80500	      1499 ns/op	    666935 invocations/s	    1660 B/op	      31 allocs/op
+BenchmarkEquivalentRepeatedInvocation/urfave-cli-v3-16     	   31228	      4681 ns/op	    213638 invocations/s	    4474 B/op	     183 allocs/op
+BenchmarkEquivalentRepeatedInvocation/kong-16              	   14835	      8229 ns/op	    121524 invocations/s	    9430 B/op	     187 allocs/op
+BenchmarkParsingFloorFlag-16                               	 5408002	        22.55 ns/op	  44345045 invocations/s	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/faustbrian/go-cli/benchmarks	1.337s
+goos: darwin
+goarch: arm64
+pkg: github.com/faustbrian/go-cli/benchmarks
+cpu: Apple M4 Max
+BenchmarkEquivalentColdInvocation/go-cli-16 	   43606	      2734 ns/op	    365822 invocations/s	    5420 B/op	      51 allocs/op
+BenchmarkEquivalentColdInvocation/cobra-16  	   42270	      3396 ns/op	    294469 invocations/s	    7419 B/op	      72 allocs/op
+BenchmarkEquivalentColdInvocation/urfave-cli-v3-16         	   24769	      4468 ns/op	    223830 invocations/s	    8475 B/op	     234 allocs/op
+BenchmarkEquivalentColdInvocation/kong-16                  	    6693	     18745 ns/op	     53348 invocations/s	   22867 B/op	     357 allocs/op
+BenchmarkEquivalentRepeatedInvocation/go-cli-16            	  117888	      1041 ns/op	    960157 invocations/s	    1579 B/op	      21 allocs/op
+BenchmarkEquivalentRepeatedInvocation/cobra-16             	   77775	      1590 ns/op	    629002 invocations/s	    1660 B/op	      31 allocs/op
+BenchmarkEquivalentRepeatedInvocation/urfave-cli-v3-16     	   35593	      3343 ns/op	    299110 invocations/s	    4474 B/op	     183 allocs/op
+BenchmarkEquivalentRepeatedInvocation/kong-16              	   14823	      8108 ns/op	    123335 invocations/s	    9430 B/op	     187 allocs/op
+BenchmarkParsingFloorFlag-16                               	 5351826	        22.51 ns/op	  44427473 invocations/s	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/faustbrian/go-cli/benchmarks	1.204s
+goos: darwin
+goarch: arm64
+pkg: github.com/faustbrian/go-cli/benchmarks
+cpu: Apple M4 Max
+BenchmarkEquivalentColdInvocation/go-cli-16 	   36459	      3671 ns/op	    272409 invocations/s	    5421 B/op	      51 allocs/op
+BenchmarkEquivalentColdInvocation/cobra-16  	   42396	      2864 ns/op	    349147 invocations/s	    7417 B/op	      72 allocs/op
+BenchmarkEquivalentColdInvocation/urfave-cli-v3-16         	   27151	      4434 ns/op	    225518 invocations/s	    8475 B/op	     234 allocs/op
+BenchmarkEquivalentColdInvocation/kong-16                  	    6819	     15933 ns/op	     62762 invocations/s	   22862 B/op	     357 allocs/op
+BenchmarkEquivalentRepeatedInvocation/go-cli-16            	  122415	      1009 ns/op	    991366 invocations/s	    1579 B/op	      21 allocs/op
+BenchmarkEquivalentRepeatedInvocation/cobra-16             	   80907	      1513 ns/op	    660824 invocations/s	    1660 B/op	      31 allocs/op
+BenchmarkEquivalentRepeatedInvocation/urfave-cli-v3-16     	   35845	      3279 ns/op	    305015 invocations/s	    4474 B/op	     183 allocs/op
+BenchmarkEquivalentRepeatedInvocation/kong-16              	   14972	      8009 ns/op	    124860 invocations/s	    9430 B/op	     187 allocs/op
+BenchmarkParsingFloorFlag-16                               	 5479284	        22.08 ns/op	  45292978 invocations/s	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/faustbrian/go-cli/benchmarks	1.203s

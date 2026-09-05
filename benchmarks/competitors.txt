@@ -1,0 +1,3 @@
+github.com/spf13/cobra v1.10.2 88b30ab89da2d0d0abb153818746c5a2d30eccec
+github.com/urfave/cli/v3 v3.10.1 c5f123b3909fb3270433574d9940650579cf9820
+github.com/alecthomas/kong v1.16.0 8cbde34ab0a442378448797e3c711aea557fe4a6

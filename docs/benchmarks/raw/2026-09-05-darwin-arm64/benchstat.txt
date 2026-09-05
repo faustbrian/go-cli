@@ -1,0 +1,73 @@
+comparison_class=common-denominator comparison
+goos: darwin
+goarch: arm64
+pkg: github.com/faustbrian/go-cli/benchmarks
+cpu: Apple M4 Max
+                                              │ comparison-raw.txt │
+                                              │       sec/op       │
+EquivalentColdInvocation/go-cli-16                   2.925µ ±  34%
+EquivalentColdInvocation/cobra-16                    3.210µ ± 125%
+EquivalentColdInvocation/urfave-cli-v3-16            4.513µ ±  62%
+EquivalentColdInvocation/kong-16                     20.28µ ±  48%
+EquivalentRepeatedInvocation/go-cli-16               1.043µ ±  43%
+EquivalentRepeatedInvocation/cobra-16                1.508µ ± 143%
+EquivalentRepeatedInvocation/urfave-cli-v3-16        3.344µ ± 375%
+EquivalentRepeatedInvocation/kong-16                 8.238µ ± 259%
+geomean                                              3.727µ
+
+                                              │ comparison-raw.txt │
+                                              │   invocations/s    │
+EquivalentColdInvocation/go-cli-16                    342.1k ± 26%
+EquivalentColdInvocation/cobra-16                     312.6k ± 56%
+EquivalentColdInvocation/urfave-cli-v3-16             221.6k ± 38%
+EquivalentColdInvocation/kong-16                      49.46k ± 33%
+EquivalentRepeatedInvocation/go-cli-16                959.0k ± 30%
+EquivalentRepeatedInvocation/cobra-16                 663.2k ± 59%
+EquivalentRepeatedInvocation/urfave-cli-v3-16         299.0k ± 79%
+EquivalentRepeatedInvocation/kong-16                  121.4k ± 72%
+geomean                                               268.6k
+
+                                              │ comparison-raw.txt │
+                                              │        B/op        │
+EquivalentColdInvocation/go-cli-16                    5.293Ki ± 0%
+EquivalentColdInvocation/cobra-16                     7.244Ki ± 0%
+EquivalentColdInvocation/urfave-cli-v3-16             8.276Ki ± 0%
+EquivalentColdInvocation/kong-16                      22.31Ki ± 0%
+EquivalentRepeatedInvocation/go-cli-16                1.542Ki ± 0%
+EquivalentRepeatedInvocation/cobra-16                 1.621Ki ± 0%
+EquivalentRepeatedInvocation/urfave-cli-v3-16         4.369Ki ± 0%
+EquivalentRepeatedInvocation/kong-16                  9.209Ki ± 0%
+geomean                                               5.390Ki
+
+                                              │ comparison-raw.txt │
+                                              │     allocs/op      │
+EquivalentColdInvocation/go-cli-16                      51.00 ± 0%
+EquivalentColdInvocation/cobra-16                       72.00 ± 0%
+EquivalentColdInvocation/urfave-cli-v3-16               234.0 ± 0%
+EquivalentColdInvocation/kong-16                        357.0 ± 0%
+EquivalentRepeatedInvocation/go-cli-16                  21.00 ± 0%
+EquivalentRepeatedInvocation/cobra-16                   31.00 ± 0%
+EquivalentRepeatedInvocation/urfave-cli-v3-16           183.0 ± 0%
+EquivalentRepeatedInvocation/kong-16                    187.0 ± 0%
+geomean                                                 95.35
+
+comparison_class=raw baseline
+goos: darwin
+goarch: arm64
+pkg: github.com/faustbrian/go-cli/benchmarks
+cpu: Apple M4 Max
+                    │ baseline-raw.txt │
+                    │      sec/op      │
+ParsingFloorFlag-16      22.60n ± 234%
+
+                    │ baseline-raw.txt │
+                    │  invocations/s   │
+ParsingFloorFlag-16       44.26M ± 70%
+
+                    │ baseline-raw.txt │
+                    │       B/op       │
+ParsingFloorFlag-16         0.000 ± 0%
+
+                    │ baseline-raw.txt │
+                    │    allocs/op     │
+ParsingFloorFlag-16         0.000 ± 0%

@@ -1,11 +1,15 @@
 package benchmarks
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"flag"
+	"fmt"
 	"io"
+	"strings"
+	"sync"
 	"testing"
 
 	"github.com/alecthomas/kong"
@@ -14,172 +18,565 @@ import (
 	urfave "github.com/urfave/cli/v3"
 )
 
-var (
-	comparisonArgv = []string{"deploy", "--force", "target"}
-	benchmarkSink  any
-)
+var comparisonArgv = []string{"tool", "deploy", "--force", "target"}
+
+var errComparisonInput = errors.New("invalid input")
+
+type comparisonClassifiedError struct {
+	kind    error
+	message string
+	cause   error
+}
+
+func (failure *comparisonClassifiedError) Error() string { return failure.message }
+func (failure *comparisonClassifiedError) Unwrap() error { return failure.cause }
+func (failure *comparisonClassifiedError) Is(target error) bool {
+	return target == failure.kind
+}
+
+var errComparisonUsage = &comparisonClassifiedError{
+	kind: framework.ErrUsage, message: "missing required argument target",
+}
+
+var errComparisonValidation = &comparisonClassifiedError{
+	kind: framework.ErrValidation, message: "command validation failed: invalid input",
+	cause: errComparisonInput,
+}
+
+const comparisonMaximumOutputBytes = 1 << 20
 
 type comparisonResult struct {
 	Target string `json:"target"`
 	Force  bool   `json:"force"`
 }
 
-func BenchmarkEquivalentConstruction(b *testing.B) {
-	b.Run("cli", func(b *testing.B) {
-		for b.Loop() {
-			application, err := newGoCLI()
+func validateComparison(force bool, target string, arguments int) error {
+	if arguments != 1 {
+		return errComparisonUsage
+	}
+	if !force || target == "" {
+		return errComparisonInput
+	}
+
+	return nil
+}
+
+func comparisonResultForTarget(target string, force bool) comparisonResult {
+	if target == "oversize" {
+		target = strings.Repeat("x", comparisonMaximumOutputBytes)
+	}
+
+	return comparisonResult{Target: target, Force: force}
+}
+
+type comparisonOutput struct {
+	mu        sync.Mutex
+	dataJSON  json.RawMessage
+	dataHuman string
+}
+
+type comparisonOutputSnapshot struct {
+	dataJSON  json.RawMessage
+	dataHuman string
+}
+
+func (output *comparisonOutput) setData(result comparisonResult) error {
+	encoded, err := json.Marshal(result)
+	if err != nil {
+		return err
+	}
+	human := fmt.Sprint(result)
+	if max(len(encoded), len(human)) > comparisonMaximumOutputBytes {
+		return &comparisonClassifiedError{
+			kind: framework.ErrOutput, message: "output exceeds configured limit",
+		}
+	}
+	output.mu.Lock()
+	defer output.mu.Unlock()
+	output.dataJSON = append(output.dataJSON[:0], encoded...)
+	output.dataHuman = human
+
+	return nil
+}
+
+func (output *comparisonOutput) render(stdout io.Writer) error {
+	output.mu.Lock()
+	snapshot := comparisonOutputSnapshot{
+		dataJSON:  append(json.RawMessage(nil), output.dataJSON...),
+		dataHuman: output.dataHuman,
+	}
+	output.mu.Unlock()
+	err := writeComparisonJSON(stdout, struct {
+		Schema string          `json:"schema"`
+		OK     bool            `json:"ok"`
+		Data   json.RawMessage `json:"data"`
+	}{
+		Schema: "go-cli/v1",
+		OK:     true,
+		Data:   snapshot.dataJSON,
+	})
+	if err != nil {
+		return &comparisonClassifiedError{
+			kind: framework.ErrOutput, message: "render command output: " + err.Error(), cause: err,
+		}
+	}
+
+	return nil
+}
+
+func writeComparisonFailure(stdout io.Writer, failure error) error {
+	kind := "usage"
+	message := errComparisonUsage.Error()
+	switch {
+	case errors.Is(failure, errComparisonInput):
+		kind = "validation"
+		message = errComparisonValidation.Error()
+		failure = errComparisonValidation
+	case errors.Is(failure, framework.ErrOutput):
+		kind = "output"
+		message = failure.Error()
+	case errors.Is(failure, framework.ErrUsage):
+		failure = errComparisonUsage
+	default:
+		failure = errComparisonUsage
+	}
+	writeErr := writeComparisonJSON(stdout, struct {
+		Schema string `json:"schema"`
+		OK     bool   `json:"ok"`
+		Error  struct {
+			Kind    string `json:"kind"`
+			Message string `json:"message"`
+		} `json:"error"`
+	}{
+		Schema: "go-cli/v1",
+		OK:     false,
+		Error: struct {
+			Kind    string `json:"kind"`
+			Message string `json:"message"`
+		}{
+			Kind:    kind,
+			Message: message,
+		},
+	})
+	if writeErr != nil {
+		return errors.Join(failure, &comparisonClassifiedError{
+			kind: framework.ErrOutput, message: "render command output: " + writeErr.Error(),
+			cause: writeErr,
+		})
+	}
+
+	return failure
+}
+
+func writeComparisonJSON(stdout io.Writer, value any) error {
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+	encoded = append(encoded, '\n')
+	written, err := stdout.Write(encoded)
+	if err != nil {
+		return err
+	}
+	if written != len(encoded) {
+		return io.ErrShortWrite
+	}
+
+	return nil
+}
+
+type shortComparisonWriter struct{}
+
+func (shortComparisonWriter) Write(data []byte) (int, error) {
+	return max(0, len(data)-1), nil
+}
+
+func TestComparisonOutputMatchesOwnedBoundsAndWriterContract(t *testing.T) {
+	t.Parallel()
+
+	for _, testCase := range equivalentComparisonCases() {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+			application, err := testCase.new()
+			if err != nil {
+				t.Fatal(err)
+			}
+			var stdout bytes.Buffer
+			var stderr bytes.Buffer
+			err = application.run(context.Background(), []string{
+				"tool", "deploy", "--force", "oversize",
+			}, &stdout, &stderr)
+			if !errors.Is(err, framework.ErrOutput) || err.Error() != "output exceeds configured limit" {
+				t.Fatalf("oversized result error = %v, want output limit", err)
+			}
+			if got := stdout.String(); got != comparisonOutputFailureJSON() {
+				t.Fatalf("oversized result stdout = %q, want %q", got, comparisonOutputFailureJSON())
+			}
+			if got := stderr.String(); got != "" {
+				t.Fatalf("oversized result stderr = %q, want empty", got)
+			}
+
+			application, err = testCase.new()
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = application.run(
+				context.Background(), comparisonArgv, shortComparisonWriter{}, io.Discard,
+			)
+			if !errors.Is(err, framework.ErrOutput) || !errors.Is(err, io.ErrShortWrite) {
+				t.Fatalf("short writer error = %v, want output-class short write", err)
+			}
+
+			application, err = testCase.new()
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = application.run(
+				context.Background(), []string{"tool", "deploy", "target"},
+				shortComparisonWriter{}, io.Discard,
+			)
+			if !errors.Is(err, framework.ErrValidation) ||
+				!errors.Is(err, errComparisonInput) ||
+				!errors.Is(err, framework.ErrOutput) ||
+				!errors.Is(err, io.ErrShortWrite) {
+				t.Fatalf(
+					"failure short writer error = %v, want validation/input and output/short-write classes",
+					err,
+				)
+			}
+		})
+	}
+}
+
+type comparisonApplication struct {
+	invoke func(context.Context, []string, io.Writer, io.Writer) error
+}
+
+func TestEquivalentBenchmarkRunnersIsolateRepeatedState(t *testing.T) {
+	t.Parallel()
+
+	for _, testCase := range equivalentComparisonCases() {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+			application, err := testCase.new()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := application.run(
+				context.Background(), comparisonArgv, io.Discard, io.Discard,
+			); err != nil {
+				t.Fatal(err)
+			}
+			var invalidStdout bytes.Buffer
+			var invalidStderr bytes.Buffer
+			if err := application.run(
+				context.Background(), []string{"tool", "deploy", "target"},
+				&invalidStdout, &invalidStderr,
+			); !errors.Is(err, errComparisonInput) || !errors.Is(err, framework.ErrValidation) ||
+				err.Error() != errComparisonValidation.Error() {
+				t.Fatalf("second invocation error = %v, want classified invalid input", err)
+			}
+			if got := invalidStdout.String(); got != comparisonFailureJSON() {
+				t.Fatalf("second invocation stdout = %q, want %q", got, comparisonFailureJSON())
+			}
+			if got := invalidStderr.String(); got != "" {
+				t.Fatalf("second invocation stderr = %q, want empty", got)
+			}
+			var stdout bytes.Buffer
+			if err := application.run(
+				context.Background(), comparisonArgv, &stdout, io.Discard,
+			); err != nil {
+				t.Fatal(err)
+			}
+			if got := stdout.String(); got != comparisonOutputJSON() {
+				t.Fatalf("third invocation stdout = %q, want %q", got, comparisonOutputJSON())
+			}
+		})
+	}
+}
+
+func comparisonOutputJSON() string {
+	return "{\"schema\":\"go-cli/v1\",\"ok\":true," +
+		"\"data\":{\"target\":\"target\",\"force\":true}}\n"
+}
+
+func comparisonFailureJSON() string {
+	return "{\"schema\":\"go-cli/v1\",\"ok\":false," +
+		"\"error\":{\"kind\":\"validation\",\"message\":\"command validation failed: invalid input\"}}\n"
+}
+
+func comparisonUsageFailureJSON() string {
+	return "{\"schema\":\"go-cli/v1\",\"ok\":false," +
+		"\"error\":{\"kind\":\"usage\",\"message\":\"missing required argument target\"}}\n"
+}
+
+func comparisonOutputFailureJSON() string {
+	return "{\"schema\":\"go-cli/v1\",\"ok\":false," +
+		"\"error\":{\"kind\":\"output\",\"message\":\"output exceeds configured limit\"}}\n"
+}
+
+func (application *comparisonApplication) run(
+	ctx context.Context,
+	argv []string,
+	stdout io.Writer,
+	stderr io.Writer,
+) error {
+	return application.invoke(ctx, argv, stdout, stderr)
+}
+
+type comparisonCase struct {
+	name string
+	new  func() (*comparisonApplication, error)
+}
+
+func equivalentComparisonCases() []comparisonCase {
+	return []comparisonCase{
+		{name: "go-cli", new: newGoCLIComparison},
+		{name: "cobra", new: newCobraComparison},
+		{name: "urfave-cli-v3", new: newUrfaveComparison},
+		{name: "kong", new: newKongComparison},
+	}
+}
+
+func TestEquivalentBenchmarkRunnersShareObservableContract(t *testing.T) {
+	t.Parallel()
+
+	wantOutput := comparisonOutputJSON()
+	for _, testCase := range equivalentComparisonCases() {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+
+			application, err := testCase.new()
+			if err != nil {
+				t.Fatal(err)
+			}
+			for invocation := range 2 {
+				var stdout bytes.Buffer
+				var stderr bytes.Buffer
+				err = application.run(
+					context.Background(), comparisonArgv, &stdout, &stderr,
+				)
+				if err != nil {
+					t.Fatalf("invocation %d: %v", invocation+1, err)
+				}
+				if got := stdout.String(); got != wantOutput {
+					t.Fatalf("invocation %d stdout = %q, want %q", invocation+1, got, wantOutput)
+				}
+				if got := stderr.String(); got != "" {
+					t.Fatalf("invocation %d stderr = %q, want empty", invocation+1, got)
+				}
+			}
+		})
+	}
+}
+
+func TestEquivalentBenchmarkRunnersShareStructuralFailure(t *testing.T) {
+	t.Parallel()
+
+	for _, testCase := range equivalentComparisonCases() {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+			application, err := testCase.new()
+			if err != nil {
+				t.Fatal(err)
+			}
+			var stdout bytes.Buffer
+			var stderr bytes.Buffer
+			err = application.run(
+				context.Background(), []string{"tool", "deploy", "--force"}, &stdout, &stderr,
+			)
+			if !errors.Is(err, framework.ErrUsage) || err.Error() != errComparisonUsage.Error() {
+				t.Fatalf("structural error = %v, want usage-class missing target", err)
+			}
+			if got := stdout.String(); got != comparisonUsageFailureJSON() {
+				t.Fatalf("structural stdout = %q, want %q", got, comparisonUsageFailureJSON())
+			}
+			if got := stderr.String(); got != "" {
+				t.Fatalf("structural stderr = %q, want empty", got)
+			}
+		})
+	}
+}
+
+func BenchmarkEquivalentColdInvocation(b *testing.B) {
+	for _, benchmarkCase := range equivalentComparisonCases() {
+		b.Run(benchmarkCase.name, func(b *testing.B) {
+			b.ReportAllocs()
+			for b.Loop() {
+				application, err := benchmarkCase.new()
+				if err != nil {
+					b.Fatal(err)
+				}
+				err = application.run(
+					context.Background(), comparisonArgv, io.Discard, io.Discard,
+				)
+				if err != nil {
+					b.Fatal(err)
+				}
+			}
+			reportThroughput(b)
+		})
+	}
+}
+
+func BenchmarkEquivalentRepeatedInvocation(b *testing.B) {
+	for _, benchmarkCase := range equivalentComparisonCases() {
+		b.Run(benchmarkCase.name, func(b *testing.B) {
+			b.StopTimer()
+			application, err := benchmarkCase.new()
 			if err != nil {
 				b.Fatal(err)
 			}
-			benchmarkSink = application
-		}
-	})
-	b.Run("cobra", func(b *testing.B) {
-		for b.Loop() {
-			root, _, _ := newCobra()
-			benchmarkSink = root
-		}
-	})
-	b.Run("urfave-cli-v3", func(b *testing.B) {
-		for b.Loop() {
-			benchmarkSink = newUrfave()
-		}
-	})
-	b.Run("kong", func(b *testing.B) {
-		for b.Loop() {
-			parser, _, err := newKong()
-			if err != nil {
-				b.Fatal(err)
+			b.ReportAllocs()
+			b.StartTimer()
+			for b.Loop() {
+				err = application.run(
+					context.Background(), comparisonArgv, io.Discard, io.Discard,
+				)
+				if err != nil {
+					b.Fatal(err)
+				}
 			}
-			benchmarkSink = parser
-		}
-	})
-	b.Run("flag", func(b *testing.B) {
-		for b.Loop() {
-			flags, _ := newFlag()
-			benchmarkSink = flags
-		}
-	})
+			reportThroughput(b)
+		})
+	}
 }
 
-func BenchmarkEquivalentDispatch(b *testing.B) {
-	b.Run("cli", benchmarkGoCLI)
-	b.Run("cobra", benchmarkCobra)
-	b.Run("urfave-cli-v3", benchmarkUrfave)
-	b.Run("kong", benchmarkKong)
-	b.Run("flag", benchmarkFlag)
+func reportThroughput(b *testing.B) {
+	if elapsed := b.Elapsed().Seconds(); elapsed > 0 {
+		b.ReportMetric(float64(b.N)/elapsed, "invocations/s")
+	}
 }
 
-func newGoCLI() (*framework.Application, error) {
+func newGoCLIComparison() (*comparisonApplication, error) {
 	force := framework.BoolOption("force")
 	target := framework.StringArgument("target")
-	return framework.Compile(framework.NewCommand(
+	application, err := framework.Compile(framework.NewCommand(
 		"tool",
 		framework.WithSubcommands(framework.NewCommand(
 			"deploy",
 			framework.WithOptions(force),
 			framework.WithArguments(target),
 			framework.WithValidation(func(_ context.Context, input framework.Input) error {
-				if !force.Get(input) || target.Get(input) != "target" {
-					return errors.New("invalid input")
-				}
-				return nil
+				return validateComparison(force.Get(input), target.Get(input), 1)
 			}),
 			framework.WithHandler(func(_ context.Context, invocation framework.Invocation) error {
-				return invocation.Output().SetData(comparisonResult{
-					Target: target.Get(invocation.Input()), Force: force.Get(invocation.Input()),
-				})
+				return invocation.Output().SetData(comparisonResultForTarget(
+					target.Get(invocation.Input()), force.Get(invocation.Input()),
+				))
 			}),
 		)),
 	))
-}
-
-func benchmarkGoCLI(b *testing.B) {
-	application, err := newGoCLI()
 	if err != nil {
-		b.Fatal(err)
+		return nil, err
 	}
-	request := framework.Request{
-		Args: comparisonArgv, Stdout: io.Discard, Stderr: io.Discard,
-		Output: framework.OutputPolicy{Mode: framework.OutputJSON},
-	}
-	b.ReportAllocs()
-	for b.Loop() {
-		if result := application.Run(context.Background(), request); result.Err != nil {
-			b.Fatal(result.Err)
-		}
-	}
+
+	return &comparisonApplication{
+		invoke: func(ctx context.Context, argv []string, stdout, stderr io.Writer) error {
+			return application.RunCommand(ctx, framework.Request{
+				Args: argv[1:], Stdout: stdout, Stderr: stderr,
+				Output: framework.OutputPolicy{Mode: framework.OutputJSON},
+			}).Err
+		},
+	}, nil
 }
 
-func newCobra() (*cobra.Command, *bool, *cobra.Command) {
+func newCobraComparison() (*comparisonApplication, error) {
+	var output *comparisonOutput
 	root := &cobra.Command{Use: "tool", SilenceErrors: true, SilenceUsage: true}
 	var force *bool
 	deploy := &cobra.Command{
-		Use: "deploy <target>", Args: cobra.ExactArgs(1),
+		Use:  "deploy <target>",
+		Args: cobra.ExactArgs(1),
+		PreRunE: func(_ *cobra.Command, args []string) error {
+			return validateComparison(*force, args[0], len(args))
+		},
 		RunE: func(_ *cobra.Command, args []string) error {
-			if !*force || args[0] != "target" {
-				return errors.New("invalid input")
-			}
-			return json.NewEncoder(io.Discard).Encode(comparisonResult{Target: args[0], Force: *force})
+			return output.setData(comparisonResultForTarget(args[0], *force))
 		},
 	}
 	force = deploy.Flags().Bool("force", false, "")
 	root.AddCommand(deploy)
-	root.SetOut(io.Discard)
-	root.SetErr(io.Discard)
-	return root, force, deploy
+	root.CompletionOptions.DisableDefaultCmd = true
+
+	return &comparisonApplication{
+		invoke: func(ctx context.Context, argv []string, stdout, stderr io.Writer) error {
+			output = new(comparisonOutput)
+			*force = false
+			root.SetOut(stdout)
+			root.SetErr(stderr)
+			root.SetArgs(argv[1:])
+			if err := root.ExecuteContext(ctx); err != nil {
+				return writeComparisonFailure(stdout, err)
+			}
+
+			return output.render(stdout)
+		},
+	}, nil
 }
 
-func benchmarkCobra(b *testing.B) {
-	root, force, deploy := newCobra()
-	b.ReportAllocs()
-	for b.Loop() {
-		*force = false
-		deploy.Flags().Lookup("force").Changed = false
-		root.SetArgs(comparisonArgv)
-		if err := root.ExecuteContext(context.Background()); err != nil {
-			b.Fatal(err)
-		}
+func newUrfaveComparison() (*comparisonApplication, error) {
+	var output *comparisonOutput
+	deploy := &urfave.Command{
+		Name: "deploy", ArgsUsage: "<target>",
+		Flags: []urfave.Flag{&urfave.BoolFlag{Name: "force"}},
+		Before: func(ctx context.Context, command *urfave.Command) (context.Context, error) {
+			return ctx, validateComparison(
+				command.Bool("force"), command.Args().First(), command.Args().Len(),
+			)
+		},
+		Action: func(_ context.Context, command *urfave.Command) error {
+			return output.setData(comparisonResultForTarget(
+				command.Args().First(), command.Bool("force"),
+			))
+		},
 	}
-}
-
-func newUrfave() *urfave.Command {
-	return &urfave.Command{
+	command := &urfave.Command{
 		Name: "tool", HideHelp: true, HideHelpCommand: true, HideVersion: true,
 		Writer: io.Discard, ErrWriter: io.Discard,
-		Commands: []*urfave.Command{{
-			Name: "deploy", ArgsUsage: "<target>",
-			Flags: []urfave.Flag{&urfave.BoolFlag{Name: "force"}},
-			Action: func(_ context.Context, command *urfave.Command) error {
-				if !command.Bool("force") || command.Args().Len() != 1 || command.Args().First() != "target" {
-					return errors.New("invalid input")
-				}
-				return json.NewEncoder(io.Discard).Encode(comparisonResult{
-					Target: command.Args().First(), Force: command.Bool("force"),
-				})
-			},
-		}},
+		Commands: []*urfave.Command{deploy},
 	}
-}
 
-func benchmarkUrfave(b *testing.B) {
-	command := newUrfave()
-	b.ReportAllocs()
-	for b.Loop() {
-		if err := command.Run(context.Background(), append([]string{"tool"}, comparisonArgv...)); err != nil {
-			b.Fatal(err)
-		}
-	}
+	return &comparisonApplication{
+		invoke: func(ctx context.Context, argv []string, stdout, stderr io.Writer) error {
+			output = new(comparisonOutput)
+			command.Writer = stdout
+			command.ErrWriter = stderr
+			deploy.Writer = stdout
+			deploy.ErrWriter = stderr
+			if err := command.Run(ctx, argv); err != nil {
+				return writeComparisonFailure(stdout, err)
+			}
+
+			return output.render(stdout)
+		},
+	}, nil
 }
 
 type kongCLI struct {
-	Deploy struct {
-		Force  bool   `help:"force deployment"`
-		Target string `arg:""`
-	} `cmd:""`
+	Deploy kongDeploy `cmd:""`
 }
 
-func newKong() (*kong.Kong, *kongCLI, error) {
+type kongDeploy struct {
+	Force  bool              `help:"force deployment"`
+	Target string            `arg:""`
+	output *comparisonOutput `kong:"-"`
+}
+
+func (command *kongDeploy) Validate() error {
+	arguments := 1
+	if command.Target == "" {
+		arguments = 0
+	}
+
+	return validateComparison(command.Force, command.Target, arguments)
+}
+
+func (command *kongDeploy) Run() error {
+	return command.output.setData(comparisonResultForTarget(command.Target, command.Force))
+}
+
+func newKongComparison() (*comparisonApplication, error) {
 	model := new(kongCLI)
 	parser, err := kong.New(
 		model,
@@ -188,56 +585,47 @@ func newKong() (*kong.Kong, *kongCLI, error) {
 		kong.Exit(func(int) {}),
 		kong.NoDefaultHelp(),
 	)
-	return parser, model, err
-}
-
-func benchmarkKong(b *testing.B) {
-	parser, model, err := newKong()
 	if err != nil {
-		b.Fatal(err)
+		return nil, err
 	}
-	b.ReportAllocs()
-	for b.Loop() {
-		model.Deploy.Force = false
-		model.Deploy.Target = ""
-		if _, err := parser.Parse(comparisonArgv); err != nil {
-			b.Fatal(err)
-		}
-		if !model.Deploy.Force || model.Deploy.Target != "target" {
-			b.Fatal("invalid input")
-		}
-		if err := json.NewEncoder(io.Discard).Encode(comparisonResult{
-			Target: model.Deploy.Target, Force: model.Deploy.Force,
-		}); err != nil {
-			b.Fatal(err)
-		}
-	}
+
+	return &comparisonApplication{
+		invoke: func(_ context.Context, argv []string, stdout, _ io.Writer) error {
+			model.Deploy.output = new(comparisonOutput)
+			parsed, err := parser.Parse(argv[1:])
+			if err != nil {
+				return writeComparisonFailure(stdout, err)
+			}
+			if err := parsed.Run(); err != nil {
+				return writeComparisonFailure(stdout, err)
+			}
+
+			return model.Deploy.output.render(stdout)
+		},
+	}, nil
 }
 
-func newFlag() (*flag.FlagSet, *bool) {
-	flags := flag.NewFlagSet("deploy", flag.ContinueOnError)
-	flags.SetOutput(io.Discard)
-	return flags, flags.Bool("force", false, "")
-}
-
-func benchmarkFlag(b *testing.B) {
-	flags, force := newFlag()
+func BenchmarkParsingFloorFlag(b *testing.B) {
+	flags, force := newFlagParser()
 	b.ReportAllocs()
 	for b.Loop() {
-		if comparisonArgv[0] != "deploy" {
+		*force = false
+		if comparisonArgv[1] != "deploy" {
 			b.Fatal("unexpected command")
 		}
-		*force = false
-		if err := flags.Parse(comparisonArgv[1:]); err != nil {
+		if err := flags.Parse(comparisonArgv[2:]); err != nil {
 			b.Fatal(err)
 		}
 		if !*force || flags.NArg() != 1 || flags.Arg(0) != "target" {
 			b.Fatal("invalid input")
 		}
-		if err := json.NewEncoder(io.Discard).Encode(comparisonResult{
-			Target: flags.Arg(0), Force: *force,
-		}); err != nil {
-			b.Fatal(err)
-		}
 	}
+	reportThroughput(b)
+}
+
+func newFlagParser() (*flag.FlagSet, *bool) {
+	flags := flag.NewFlagSet("deploy", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+
+	return flags, flags.Bool("force", false, "")
 }
