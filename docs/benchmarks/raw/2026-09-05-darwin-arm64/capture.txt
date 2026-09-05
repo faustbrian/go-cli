@@ -1,0 +1,8 @@
+started_utc=2026-09-05T17:08:39Z
+conformance_command=run_with_process_timeout 120 env GOWORK=$PWD/go.work go test ./benchmarks/... -run ^(TestComparisonOutputMatchesOwnedBoundsAndWriterContract|TestEquivalentBenchmarkRunnersIsolateRepeatedState|TestEquivalentBenchmarkRunnersShareObservableContract|TestEquivalentBenchmarkRunnersShareStructuralFailure|TestOwnedParserMatchesTheFormerCobraAdapter)$ -count=1 -timeout=110s
+command=for process in 1..10; run_with_process_timeout 120 env GOWORK=/Users/brian/Developer/golib/go-cli/go.work go test ./benchmarks/... -run ^$ -bench ^BenchmarkEquivalent(Cold|Repeated)Invocation$|^BenchmarkParsingFloorFlag$ -benchmem -benchtime=100ms -count=1 -timeout=110s
+analysis_command=split raw.txt by comparison class; run_with_process_timeout 120 env GOWORK=off go run golang.org/x/perf/cmd/benchstat@v0.0.0-20260709024250-82a0b07e230d for each class
+finished_utc=2026-09-05T17:09:01Z
+identity_before_sha256=51f67ad8937cc13dc9dadc826ef47b6091e0ac486baef20d4a256aaf35c13ae7
+identity_after_sha256=51f67ad8937cc13dc9dadc826ef47b6091e0ac486baef20d4a256aaf35c13ae7
+identity_match=true

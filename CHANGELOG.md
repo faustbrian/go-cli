@@ -9,6 +9,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Compare CLI frameworks through one executable output contract with cold and
+  repeated invocation measurements, and retain standard `flag` only as a
+  non-equivalent parsing floor.
 - Upgrade the checksum-verified CLI and immutable shared workflow to
   `go-library-tools` v1.4.0, enforce online specification validation in local
   CI, and retain the schema-v2 cohesion contract.
@@ -28,10 +31,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Documentation
 
-- Document the internal, non-releasable benchmark harness, its matched-fixture
-  limitations, per-library timed and first-run work, lifecycle and output
-  differences, historical evidence status, unenforced budget targets,
-  reproducible commands, and engineering-only navigation.
+- Document the internal, non-releasable benchmark harness, its shared
+  observable contract, framework execution paths, historical evidence status,
+  reproducible multi-sample method, and engineering-only navigation.
 - Link consumers to the immutable v1.4.0 ecosystem index and Tooling family
   guidance.
 - Link consumers to the immutable v1.3.0 Golib ecosystem index and Tooling

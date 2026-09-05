@@ -1,0 +1,101 @@
+source_base_head=aab5777b39deedb87d0e76810b20f1668410e2e0
+source_fingerprint=87988c22d76e4ed0e3fdf1e8d4dca7ba61cb2d9e85236084fa9768c6dbce7fab
+source_state_begin
+ M CHANGELOG.md
+ M benchmarks/README.md
+ M benchmarks/compare_test.go
+ M docs/performance.md
+ D scripts/check-benchmark-budget.sh
+ M verification/package.mk
+?? benchmarks/competitors.txt
+?? scripts/benchmark-input-fingerprint.sh
+?? scripts/capture-benchmark-evidence.sh
+source_state_end
+go_version=go1.26.6
+goos=darwin
+goarch=arm64
+go386=
+goamd64=
+goarm=
+goarm64=v8.0
+gomips=
+gomips64=
+goppc64=
+goriscv64=
+gowasm=
+cgo_enabled=1
+goexperiment=
+goflags=
+gomaxprocs=
+gogc=
+gomemlimit=
+godebug=
+operating_system=Darwin 27.0.0 Darwin Kernel Version 27.0.0: Tue Aug 11 22:03:09 PDT 2026; root:xnu-13432.1.9~3/RELEASE_ARM64_T6041
+machine=arm64
+cpu=Apple M4 Max
+power_source=Now drawing from 'AC Power'
+power_mode_begin
+Battery Power:
+ Sleep On Power Button 1
+ powermode            0
+ standby              1
+ ttyskeepawake        1
+ hibernatemode        3
+ powernap             1
+ hibernatefile        /var/vm/sleepimage
+ displaysleep         0
+ womp                 0
+ networkoversleep     0
+ sleep                1
+ lessbright           1
+ tcpkeepalive         1
+ disksleep            10
+AC Power:
+ Sleep On Power Button 1
+ powermode            0
+ standby              1
+ ttyskeepawake        1
+ hibernatemode        3
+ powernap             1
+ hibernatefile        /var/vm/sleepimage
+ displaysleep         0
+ womp                 1
+ networkoversleep     0
+ sleep                1
+ tcpkeepalive         1
+ disksleep            10
+power_mode_end
+conformance_pattern=^(TestComparisonOutputMatchesOwnedBoundsAndWriterContract|TestEquivalentBenchmarkRunnersIsolateRepeatedState|TestEquivalentBenchmarkRunnersShareObservableContract|TestEquivalentBenchmarkRunnersShareStructuralFailure|TestOwnedParserMatchesTheFormerCobraAdapter)$
+benchmark_pattern=^BenchmarkEquivalent(Cold|Repeated)Invocation$|^BenchmarkParsingFloorFlag$
+benchmark_duration=100ms
+sample_count=10
+process_count=10
+samples_per_process=1
+test_timeout=110s
+process_timeout_seconds=120
+benchstat_version=v0.0.0-20260709024250-82a0b07e230d
+competitor_revisions_begin
+github.com/spf13/cobra v1.10.2 88b30ab89da2d0d0abb153818746c5a2d30eccec
+github.com/urfave/cli/v3 v3.10.1 c5f123b3909fb3270433574d9940650579cf9820
+github.com/alecthomas/kong v1.16.0 8cbde34ab0a442378448797e3c711aea557fe4a6
+competitor_revisions_end
+modules_begin
+github.com/faustbrian/go-cli
+github.com/faustbrian/go-cli/benchmarks
+github.com/alecthomas/assert/v2 v2.11.0
+github.com/alecthomas/kong v1.16.0
+github.com/alecthomas/repr v0.5.2
+github.com/cpuguy83/go-md2man/v2 v2.0.6
+github.com/davecgh/go-spew v1.1.1
+github.com/hexops/gotextdiff v1.0.3
+github.com/inconshreveable/mousetrap v1.1.0
+github.com/pmezard/go-difflib v1.0.0
+github.com/russross/blackfriday/v2 v2.1.0
+github.com/spf13/cobra v1.10.2
+github.com/spf13/pflag v1.0.9
+github.com/stretchr/testify v1.11.1
+github.com/urfave/cli/v3 v3.10.1
+go.yaml.in/yaml/v3 v3.0.4
+gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405
+gopkg.in/yaml.v3 v3.0.1
+modules_end
