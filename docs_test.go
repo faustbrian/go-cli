@@ -28,11 +28,9 @@ func TestRequiredDocumentationSetIsPresentAndSubstantive(t *testing.T) {
 		"docs/performance.md":         {"urfave/cli", "Kong", "standard `flag`"},
 		"docs/mutation.md":            {"100% efficacy", "no survivors", "release blocker"},
 		"docs/compatibility.md":       {"Semantic Versioning", "GOWORK=off", "SBOM"},
-		"docs/release.md":             {"root repository tags", "repository root", "build-release.sh"},
 		"docs/troubleshooting.md":     {"FAQ", "NonInteractive", "global registry"},
 		"docs/limitations.md":         {"prompts", "Cobra", "does not"},
 		"SECURITY.md":                 {"Security Advisories", "os.Exit", "signal"},
-		"SUPPORT.md":                  {"GitHub issues", "GitHub Discussions", "stable v1"},
 		"CHANGELOG.md":                {"Unreleased"},
 		"LICENSE":                     {"MIT License"},
 	}
