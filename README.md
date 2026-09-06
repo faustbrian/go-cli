@@ -25,13 +25,24 @@ For ecosystem-wide package selection, construction, ownership, and lifecycle
 guidance, see the versioned [Golib ecosystem index](https://github.com/faustbrian/go-library-tools/blob/v1.4.0/docs/ecosystem/README.md)
 and its [Tooling family guidance](https://github.com/faustbrian/go-library-tools/blob/v1.4.0/docs/ecosystem/design-language.md#package-families-and-selection).
 
+The root module is stable at v1, follows Semantic Versioning, and requires Go
+1.26.6 or newer. Releases use root `vX.Y.Z` tags.
+
 ## Install
 
 ```sh
-go get github.com/faustbrian/go-cli
+go get github.com/faustbrian/go-cli@v1
 ```
 
-Go 1.26.6 or newer is required.
+## Package map
+
+| Package | Use it for |
+| --- | --- |
+| [`github.com/faustbrian/go-cli`](https://pkg.go.dev/github.com/faustbrian/go-cli) | Defining typed command graphs, compiling immutable applications, and running caller-bounded invocations. |
+| [`github.com/faustbrian/go-cli/clitest`](https://pkg.go.dev/github.com/faustbrian/go-cli/clitest) | Exercising compiled commands in tests with invocation-local arguments, context, and streams. |
+
+The commands under `cmd/` and packages under `internal/` are repository tools,
+not consumer APIs. The `benchmarks` module is an engineering-only harness.
 
 ## Minimal command
 
@@ -132,12 +143,14 @@ completion are generated as data without editing shell configuration. See
 ## Testing
 
 The `clitest` harness runs commands without mutating process-global state. See
-[commands](docs/commands.md) for examples.
+the [executable harness example](clitest/example_test.go) and
+[commands](docs/commands.md).
 
 ## Documentation
 
 Use the [documentation index](docs/README.md) for architecture, parsing,
-output, integrations, operations, security, and migration guidance.
+output, integrations, operations, security, migration, compatibility, support,
+and release guidance.
 
 ## Security note
 

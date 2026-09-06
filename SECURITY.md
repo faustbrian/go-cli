@@ -1,6 +1,7 @@
 # Security policy
 
-Report suspected vulnerabilities privately through GitHub Security Advisories.
+Report suspected vulnerabilities privately through GitHub Security Advisories
+using the [private vulnerability reporting form](https://github.com/faustbrian/go-cli/security/advisories/new).
 Do not open a public issue containing an exploit, credential, private endpoint,
 or secret-bearing argv.
 

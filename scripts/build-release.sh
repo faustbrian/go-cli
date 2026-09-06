@@ -13,8 +13,15 @@ if [[ -e "${output}" ]]; then
   exit 1
 fi
 
+repository="$(git rev-parse --show-toplevel)"
+tag="refs/tags/${version}"
+if [[ "$(git -C "${repository}" cat-file -t "${tag}" 2>/dev/null || true)" != "tag" ]]; then
+  echo "release version must identify an annotated repository tag: ${version}" >&2
+  exit 1
+fi
+revision="$(git -C "${repository}" rev-parse --verify "${tag}^{commit}")"
+
 mkdir -p "${output}"
 name="cli-${version}"
-repository="$(git rev-parse --show-toplevel)"
-git -C "${repository}" archive --format=tar --prefix="${name}/" HEAD:cli |
+git -C "${repository}" archive --format=tar --prefix="${name}/" "${revision}" |
   gzip -n -9 >"${output}/${name}.tar.gz"
