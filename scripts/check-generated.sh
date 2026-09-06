@@ -32,3 +32,5 @@ if command -v pwsh >/dev/null 2>&1; then
   pwsh -NoProfile -NonInteractive -Command \
     "[scriptblock]::Create((Get-Content -Raw '${generated}/tool.ps1')) | Out-Null"
 fi
+
+./scripts/check-release.sh

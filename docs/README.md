@@ -6,6 +6,8 @@
 - [Parsing](parsing.md)
 - [Output](output.md)
 - [Generation](generation.md)
+- [Executable root examples](../example_test.go)
+- [Executable `clitest` example](../clitest/example_test.go)
 
 ## Concepts and design
 
@@ -34,4 +36,7 @@
 - [Mutation testing](mutation.md)
 - [Release process](release.md)
 - [Contribution guide](../CONTRIBUTING.md)
+- [Support](../SUPPORT.md)
+- [Private security reporting](../SECURITY.md)
 - [Release history](../CHANGELOG.md)
+- [License](../LICENSE)
