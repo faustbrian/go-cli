@@ -15,7 +15,7 @@ mkdir -p "${fixture}/scripts"
 cp "${release_script}" "${fixture}/scripts/build-release.sh"
 chmod +x "${fixture}/scripts/build-release.sh"
 printf 'tagged source\n' >"${fixture}/README.md"
-printf 'module example.com/cli\n\ngo 1.26.6\n' >"${fixture}/go.mod"
+printf 'module example.com/cli\n\ngo 1.27.0\n' >"${fixture}/go.mod"
 
 git -C "${fixture}" init --quiet
 git -C "${fixture}" config user.email release-test@example.com
