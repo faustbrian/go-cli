@@ -26,7 +26,7 @@ guidance, see the versioned [Golib ecosystem index](https://github.com/faustbria
 and its [Tooling family guidance](https://github.com/faustbrian/go-library-tools/blob/v1.4.0/docs/ecosystem/design-language.md#package-families-and-selection).
 
 The root module is stable at v1, follows Semantic Versioning, and requires Go
-1.26.6 or newer. Releases use root `vX.Y.Z` tags.
+1.27.0 or newer. Releases use root `vX.Y.Z` tags.
 
 ## Install
 

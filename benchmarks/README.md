@@ -11,7 +11,7 @@ installation path, public package, semantic-version release, or runtime
 dependency relationship with consumers. Applications should depend on the
 public [`go-cli` module](../README.md), not this harness.
 
-The harness requires Go 1.26.6 or newer.
+The harness requires Go 1.27.0 or newer.
 
 ## Run
 
