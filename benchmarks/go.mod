@@ -3,7 +3,7 @@ module github.com/faustbrian/go-cli/benchmarks
 go 1.27.0
 
 require (
-	github.com/alecthomas/kong v1.16.0
+	github.com/alecthomas/kong v1.16.1
 	github.com/faustbrian/go-cli v1.0.0
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.9
