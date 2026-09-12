@@ -142,7 +142,7 @@ metadata, and orchestration APIs. Mark secret bindings with `Secret()` for
 framework redaction, but prefer stdin, files with application-owned policy, or
 an explicit secret provider. See [the security guide](docs/security.md).
 
-## Explicit composition
+## Why explicit commands?
 
 Commands stay visible in the application composition root without global
 registration, reflection-driven discovery, hidden injection, or background
