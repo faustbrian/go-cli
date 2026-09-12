@@ -7,6 +7,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed
+
+- Register the released public API baseline with the shared compatibility gate while retaining the repository-owned API snapshot oracle.
+
 ### Documentation
 
 - Replace archived monorepo links and the dated implementation audit with
