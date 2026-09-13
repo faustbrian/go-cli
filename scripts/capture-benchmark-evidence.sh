@@ -163,8 +163,8 @@ captured_go_env() {
 }
 
 observed_go_version="$(captured_go_env GOVERSION)"
-if [[ "${observed_go_version}" != 'go1.26.6' ]]; then
-  printf 'benchmark evidence requires go1.26.6; found %s\n' "${observed_go_version}" >&2
+if [[ "${observed_go_version}" != 'go1.27.0' ]]; then
+  printf 'benchmark evidence requires go1.27.0; found %s\n' "${observed_go_version}" >&2
   exit 1
 fi
 

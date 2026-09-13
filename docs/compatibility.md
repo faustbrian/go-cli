@@ -5,7 +5,7 @@ binding semantics, parser forms, Unicode policy, generated schemas, output
 envelopes, error kinds and sentinels, default exit codes, completion protocol,
 and deterministic ordering are compatibility contracts.
 
-The minimum supported and tested toolchain is Go 1.26.6. Releases run with
+The minimum supported and CI-tested toolchain is Go 1.27.0. Releases run with
 `GOWORK=off`; local workspaces must not hide missing module dependencies. The
 exported API is compared with its checked-in baseline.
 
