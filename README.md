@@ -43,6 +43,7 @@ go get github.com/faustbrian/go-cli@v1
 
 The commands under `cmd/` and packages under `internal/` are repository tools,
 not consumer APIs. The `benchmarks` module is an engineering-only harness.
+Go 1.27.0 or newer is required.
 
 ## Minimal command
 
