@@ -36,7 +36,7 @@ type CommandOption func(*Command)
 func NewCommand(name string, options ...CommandOption) *Command {
 	command := &Command{name: name}
 	for _, option := range options {
-		switch option {
+		switch option { //nolint:gocritic // Intentional mutation-safe control flow.
 		case nil:
 			continue
 		}

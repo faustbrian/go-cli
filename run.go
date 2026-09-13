@@ -93,15 +93,15 @@ func (application *Application) withExitCode(result Result) Result {
 func (application *Application) run(ctx context.Context, request Request) Result {
 	streams := normalizeIO(request)
 	output := &Output{}
-	switch application {
+	switch application { //nolint:gocritic // Intentional mutation-safe control flow.
 	case nil:
 		return finalize(streams, request.Output, nil, output, newInternalError("run a nil application", nil))
 	}
-	switch application.root {
+	switch application.root { //nolint:gocritic // Intentional mutation-safe control flow.
 	case nil:
 		return finalize(streams, request.Output, nil, output, newInternalError("run a nil application", nil))
 	}
-	switch ctx {
+	switch ctx { //nolint:gocritic // Intentional mutation-safe control flow.
 	case nil:
 		return finalize(streams, request.Output, nil, output, newInternalError("run with a nil context", nil))
 	}
