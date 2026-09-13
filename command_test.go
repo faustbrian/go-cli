@@ -8,6 +8,15 @@ import (
 	cli "github.com/faustbrian/go-cli"
 )
 
+func TestNewCommandIgnoresNilOptions(t *testing.T) {
+	t.Parallel()
+
+	command := cli.NewCommand("tool", nil)
+	if _, err := cli.Compile(command); err != nil {
+		t.Fatalf("compile command with nil option: %v", err)
+	}
+}
+
 func TestCompilePublishesAnImmutableOrderedCommandGraph(t *testing.T) {
 	t.Parallel()
 
