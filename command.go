@@ -36,9 +36,11 @@ type CommandOption func(*Command)
 func NewCommand(name string, options ...CommandOption) *Command {
 	command := &Command{name: name}
 	for _, option := range options {
-		if option != nil {
-			option(command)
+		switch option {
+		case nil:
+			continue
 		}
+		option(command)
 	}
 
 	return command

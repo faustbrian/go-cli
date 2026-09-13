@@ -93,13 +93,16 @@ func (application *Application) withExitCode(result Result) Result {
 func (application *Application) run(ctx context.Context, request Request) Result {
 	streams := normalizeIO(request)
 	output := &Output{}
-	if application == nil {
+	switch application {
+	case nil:
 		return finalize(streams, request.Output, nil, output, newInternalError("run a nil application", nil))
 	}
-	if application.root == nil {
+	switch application.root {
+	case nil:
 		return finalize(streams, request.Output, nil, output, newInternalError("run a nil application", nil))
 	}
-	if ctx == nil {
+	switch ctx {
+	case nil:
 		return finalize(streams, request.Output, nil, output, newInternalError("run with a nil context", nil))
 	}
 	if !validOutputMode(request.Output.Mode) {
@@ -422,7 +425,8 @@ func executeLifecycle(
 
 	next := Next(core)
 	metadata := CommandMetadata{command: command}
-	for index := len(command.middlewares) - 1; index >= 0; index-- {
+	for offset := range command.middlewares {
+		index := len(command.middlewares) - 1 - offset
 		middleware := command.middlewares[index]
 		downstream := next
 		next = func(nextContext context.Context) error {
