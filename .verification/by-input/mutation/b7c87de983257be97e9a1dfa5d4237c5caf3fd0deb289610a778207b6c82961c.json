@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "repository": "github.com/faustbrian/go-cli",
+  "module": ".",
+  "package": ".",
+  "gate": "mutation",
+  "input_digest": "sha256:b7c87de983257be97e9a1dfa5d4237c5caf3fd0deb289610a778207b6c82961c",
+  "verifier_digest": "sha256:9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+  "result": "passed",
+  "report_digest": "sha256:db1c786f7c66db19037ed2f89ff899b611b27fd9f3e7feea195cf7cd238e9641",
+  "environment": {
+    "CGO_ENABLED": "0",
+    "GOARCH": "arm64",
+    "GOOS": "darwin",
+    "GOVERSION": "go1.27.1",
+    "gremlins_binary_sha256": "sha256:40fddb56982718bdc179e2adee0597d6873ad0d0ef97f3f73009db790a298ba6"
+  },
+  "completed_at": "2026-09-14T05:35:08.259268Z"
+}

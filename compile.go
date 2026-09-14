@@ -17,15 +17,16 @@ type Application struct {
 
 // Limits bounds hostile construction, argv, completion, and generation work.
 type Limits struct {
-	MaximumCommandDepth        int
-	MaximumCommands            int
-	MaximumOptionsPerCommand   int
-	MaximumArgumentsPerCommand int
-	MaximumArguments           int
-	MaximumArgvBytes           int
-	MaximumMetadataBytes       int
-	MaximumCompletionResults   int
-	MaximumCompletionBytes     int
+	MaximumCommandDepth              int
+	MaximumCommands                  int
+	MaximumOptionsPerCommand         int
+	MaximumArgumentsPerCommand       int
+	MaximumArguments                 int
+	MaximumArgvBytes                 int
+	MaximumMetadataBytes             int
+	MaximumCompletionProviderResults int
+	MaximumCompletionResults         int
+	MaximumCompletionBytes           int
 }
 
 // CompileOption configures immutable application compilation.
@@ -276,15 +277,16 @@ func compileCommand(
 
 func defaultLimits() Limits {
 	return Limits{
-		MaximumCommandDepth:        64,
-		MaximumCommands:            4096,
-		MaximumOptionsPerCommand:   1024,
-		MaximumArgumentsPerCommand: 1024,
-		MaximumArguments:           4096,
-		MaximumArgvBytes:           1 << 20,
-		MaximumMetadataBytes:       1 << 20,
-		MaximumCompletionResults:   100,
-		MaximumCompletionBytes:     64 << 10,
+		MaximumCommandDepth:              64,
+		MaximumCommands:                  4096,
+		MaximumOptionsPerCommand:         1024,
+		MaximumArgumentsPerCommand:       1024,
+		MaximumArguments:                 4096,
+		MaximumArgvBytes:                 1 << 20,
+		MaximumMetadataBytes:             1 << 20,
+		MaximumCompletionProviderResults: 1000,
+		MaximumCompletionResults:         100,
+		MaximumCompletionBytes:           64 << 10,
 	}
 }
 
@@ -310,6 +312,9 @@ func mergeLimits(defaults, overrides Limits) Limits {
 	if overrides.MaximumMetadataBytes != 0 {
 		defaults.MaximumMetadataBytes = overrides.MaximumMetadataBytes
 	}
+	if overrides.MaximumCompletionProviderResults != 0 {
+		defaults.MaximumCompletionProviderResults = overrides.MaximumCompletionProviderResults
+	}
 	if overrides.MaximumCompletionResults != 0 {
 		defaults.MaximumCompletionResults = overrides.MaximumCompletionResults
 	}
@@ -325,6 +330,7 @@ func validateLimits(limits Limits) error {
 		limits.MaximumOptionsPerCommand, limits.MaximumArgumentsPerCommand,
 		limits.MaximumArguments, limits.MaximumArgvBytes,
 		limits.MaximumMetadataBytes,
+		limits.MaximumCompletionProviderResults,
 		limits.MaximumCompletionResults, limits.MaximumCompletionBytes,
 	}
 	for _, value := range values {

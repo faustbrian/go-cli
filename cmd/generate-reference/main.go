@@ -7,8 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
-	cli "github.com/faustbrian/go-cli"
-	"github.com/faustbrian/go-cli/internal/referenceapp"
+	cli "github.com/faustbrian/go-cli/v2"
+	"github.com/faustbrian/go-cli/v2/internal/referenceapp"
 )
 
 func main() {

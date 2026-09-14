@@ -5,7 +5,7 @@ import (
 	"context"
 	"time"
 
-	cli "github.com/faustbrian/go-cli"
+	cli "github.com/faustbrian/go-cli/v2"
 )
 
 // New returns the canonical reference application.

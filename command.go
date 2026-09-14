@@ -189,7 +189,9 @@ func WithPostRun(hooks ...Handler) CommandOption {
 	return func(command *Command) { command.postRun = append(command.postRun, hooks...) }
 }
 
-// WithCleanup appends cleanup behavior. Cleanup runs in reverse order.
+// WithCleanup appends cleanup behavior. Cleanup runs synchronously in reverse
+// order with a bounded context. Hooks must observe context cancellation; the
+// runtime does not start or forcibly terminate goroutines around callbacks.
 func WithCleanup(hooks ...Handler) CommandOption {
 	return func(command *Command) { command.cleanup = append(command.cleanup, hooks...) }
 }

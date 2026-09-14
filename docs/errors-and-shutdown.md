@@ -8,8 +8,14 @@ framework failures.
 
 Parser failures retain only an owned adapter cause with a stable normalized
 message. Internal parser errors and mutable parser objects never enter the public error
-chain; application validation, handler, cleanup, and completion causes remain
-available to `errors.Is` and `errors.As`.
+chain. Application validation, handler, cleanup, and completion causes normally
+remain available to `errors.Is` and `errors.As`. For commands with any secret
+binding, callback failures retain `errors.Is` identity but withhold concrete
+causes from `errors.As` so secret-bearing application errors cannot escape.
+Before command selection completes, cancellation and render causes are
+conservatively protected when any command in the compiled application declares
+a secret binding. Direct completion retains protected cancellation-cause
+identity under the same rule.
 
 Default exit policy:
 
@@ -41,6 +47,9 @@ derived context. `Close` is idempotent, does not report a forced signal, and
 rejects later signal delivery. Tests call `Signal` directly and never deliver
 real process signals.
 
-Cleanup runs with a bounded context derived through `context.WithoutCancel`, so
-graceful cancellation cannot prevent release work forever and cleanup cannot
-run without a deadline.
+Cleanup runs synchronously with a deadline-bearing context derived through
+`context.WithoutCancel`, so graceful cancellation does not skip release work.
+Cleanup hooks must select on `ctx.Done()` or otherwise return promptly. Go
+cannot safely preempt an arbitrary in-process callback; a hook that ignores its
+context can keep `Run` blocked beyond the deadline. The runtime does not hide
+that limitation behind an orphaned goroutine.

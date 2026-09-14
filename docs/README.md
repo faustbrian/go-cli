@@ -5,6 +5,7 @@
 - [Commands](commands.md)
 - [Parsing](parsing.md)
 - [Output](output.md)
+- [Threat model](threat-model.md)
 - [Generation](generation.md)
 - [Executable root examples](../example_test.go)
 - [Executable `clitest` example](../clitest/example_test.go)

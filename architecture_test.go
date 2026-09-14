@@ -42,7 +42,8 @@ func TestArchitectureKeepsEngineAndRuntimeDetailsInternal(t *testing.T) {
 				strings.HasPrefix(name, "github.com/alecthomas/kong") {
 				t.Errorf("%s imports an external parser framework", path)
 			}
-			if name == "unsafe" || name == "C" || name == "os/exec" || name == "reflect" {
+			if name == "unsafe" || name == "C" || name == "os/exec" ||
+				(name == "reflect" && path != "output.go") {
 				t.Errorf("%s imports forbidden runtime facility %q", path, name)
 			}
 		}

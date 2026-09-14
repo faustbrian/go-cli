@@ -11,7 +11,7 @@ func TestRequiredDocumentationSetIsPresentAndSubstantive(t *testing.T) {
 
 	required := map[string][]string{
 		"README.md": {
-			"go get github.com/faustbrian/go-cli",
+			"go get github.com/faustbrian/go-cli@v1",
 			"explicit, typed Go command framework",
 			"ECS",
 		},
@@ -25,6 +25,7 @@ func TestRequiredDocumentationSetIsPresentAndSubstantive(t *testing.T) {
 		"docs/integrations.md":        {"config", "prompts", "telemetry"},
 		"docs/migrations.md":          {"Cobra", "Symfony Console", "Laravel Artisan"},
 		"docs/security.md":            {"process", "terminal controls", "unsafe"},
+		"docs/threat-model.md":        {"Trust boundaries", "Accepted risk", "go-cli maintainers"},
 		"docs/performance.md":         {"urfave/cli", "Kong", "standard `flag`"},
 		"docs/mutation.md":            {"100% efficacy", "no survivors", "release blocker"},
 		"docs/compatibility.md":       {"Semantic Versioning", "GOWORK=off", "SBOM"},

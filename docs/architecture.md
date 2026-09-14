@@ -20,6 +20,11 @@ Handlers receive caller-owned `context.Context`, invocation-local typed
 constructors or closures. Framework metadata never contains invocation values,
 so middleware cannot observe secrets by default.
 
+Command composition and dispatch remain reflection-free. The structured output
+boundary uses reflection only to traverse the caller-supplied `any` value before
+serialization, reject application-defined formatting callbacks, and enforce
+depth, collection-count, and byte bounds before those callbacks could run.
+
 ## Lifecycle
 
 | Phase | Runs after failure? |
@@ -32,11 +37,11 @@ so middleware cannot observe secrets by default.
 | pre-run hooks | handler and post-run stop on failure; cleanup runs |
 | handler | post-run stops on failure; cleanup runs |
 | post-run hooks | later post-run hooks stop; cleanup runs |
-| cleanup | runs once in reverse registration order with a bounded context |
+| cleanup | runs once in reverse registration order with a deadline-bearing context; hooks cooperate with cancellation |
 | rendering and exit selection | rendering failure is retained as output error |
 
 Cleanup uses `context.WithoutCancel` over the last lifecycle context plus a
-bounded timeout. It cannot erase the primary failure. Multiple failures use
+deadline-bearing context. It cannot erase the primary failure. Multiple failures use
 `errors.Join`, preserving deterministic primary-first `errors.Is` and
 `errors.As` behavior.
 

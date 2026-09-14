@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"testing"
 
-	cli "github.com/faustbrian/go-cli"
+	cli "github.com/faustbrian/go-cli/v2"
 )
 
 func TestCompletionCombinesStaticAndExplicitDynamicCandidates(t *testing.T) {
@@ -117,6 +117,72 @@ func TestCompletionCombinesStaticAndExplicitDynamicCandidates(t *testing.T) {
 		if got, want := candidateValues(candidates), []string{"eu-west-1", "eu-central-1"}; !reflect.DeepEqual(got, want) {
 			t.Fatalf("dynamic candidates for %v = %v, want %v", argv, got, want)
 		}
+	}
+}
+
+func TestCompletionBoundsInspectedProviderCandidates(t *testing.T) {
+	t.Parallel()
+
+	argument := cli.StringArgument("target").Completion(func(
+		context.Context,
+		cli.CompletionRequest,
+	) ([]cli.CompletionCandidate, error) {
+		return []cli.CompletionCandidate{
+			{},
+			{},
+			{Value: "beyond-inspection-bound"},
+		}, nil
+	})
+	application, err := cli.Compile(
+		cli.NewCommand("tool", cli.WithArguments(argument)),
+		cli.WithLimits(cli.Limits{
+			MaximumCompletionProviderResults: 2,
+			MaximumCompletionResults:         2,
+		}),
+	)
+	if err != nil {
+		t.Fatalf("Compile() error = %v", err)
+	}
+
+	candidates, err := application.Complete(context.Background(), []string{""})
+	if err != nil {
+		t.Fatalf("Complete() error = %v", err)
+	}
+	if len(candidates) != 0 {
+		t.Fatalf("Complete() candidates = %#v, want provider inspection bounded before third candidate", candidates)
+	}
+}
+
+func TestCompletionRejectsRawOversizeBeforeSanitization(t *testing.T) {
+	t.Parallel()
+
+	argument := cli.StringArgument("target").Completion(func(
+		context.Context,
+		cli.CompletionRequest,
+	) ([]cli.CompletionCandidate, error) {
+		return []cli.CompletionCandidate{
+			{Value: "\x1ba"},
+			{Value: "b"},
+		}, nil
+	})
+	application, err := cli.Compile(
+		cli.NewCommand("tool", cli.WithArguments(argument)),
+		cli.WithLimits(cli.Limits{
+			MaximumCompletionProviderResults: 2,
+			MaximumCompletionResults:         2,
+			MaximumCompletionBytes:           1,
+		}),
+	)
+	if err != nil {
+		t.Fatalf("Compile() error = %v", err)
+	}
+
+	candidates, err := application.Complete(context.Background(), []string{""})
+	if err != nil {
+		t.Fatalf("Complete() error = %v", err)
+	}
+	if got, want := candidateValues(candidates), []string{"b"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("Complete() candidates = %v, want raw-oversize candidate skipped before sanitization", got)
 	}
 }
 
