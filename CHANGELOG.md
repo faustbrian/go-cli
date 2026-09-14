@@ -7,6 +7,32 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+This source prepares an unpublished, non-releasable v2 module. Existing v1
+consumers remain on v1.0.1 until the v2 publication gates pass.
+
+### Security
+
+- Protect validation and lifecycle callback causes for commands with secret
+  bindings, retaining `errors.Is` identity without exposing callback text or
+  concrete causes through public error chains, including cancellation before
+  command selection and completion-protocol writer failures for secret child
+  commands. Preserve protected cancellation-cause identity for direct
+  completion and protect preselection render failures.
+- Bound informational and structured output before terminal or serialization
+  expansion, and reject application-defined serialization callbacks whose
+  allocation or execution cannot be constrained. Account for JSON HTML escape
+  expansion and bound completion-provider candidate inspection independently
+  of accepted results, with raw byte rejection before candidate sanitization
+  and decisive output-size rejection before string traversal. Reject
+  application-defined `IsZero` callbacks selected by `json:",omitzero"` before
+  encoding. Bound the complete encoder-reachable type graph, struct metadata,
+  and JSON-tag fallback names before the standard encoder builds its cache.
+
+### Fixed
+
+- Clarify that cleanup deadlines require cooperative hooks and do not preempt
+  non-cooperative callbacks or leave timeout goroutines behind.
+
 ### Changed
 
 - Compare CLI frameworks through one executable output contract with cold and
@@ -243,5 +269,6 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Established a 100% mutation-efficacy and 98.5% mutator-coverage release gate
   with explicit reviewed classifications for unexecuted constant mutations.
 
-[Unreleased]: https://github.com/faustbrian/go-cli/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/faustbrian/go-cli/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/faustbrian/go-cli/releases/tag/v1.0.1
 [1.0.0]: https://github.com/faustbrian/go-cli/releases/tag/v1.0.0

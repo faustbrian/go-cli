@@ -82,6 +82,20 @@ type Error struct {
 	cause   error
 }
 
+// protectedCause preserves errors.Is identity without exposing application
+// error text or concrete values through the public error chain.
+type protectedCause struct {
+	cause error
+}
+
+func (cause *protectedCause) Error() string { return "sensitive application error" }
+
+func (cause *protectedCause) GoString() string { return "sensitive application error" }
+
+func (cause *protectedCause) Is(target error) bool {
+	return cause != nil && errors.Is(cause.cause, target)
+}
+
 // Kind returns the stable error classification.
 func (err *Error) Kind() ErrorKind {
 	if err == nil {
@@ -100,7 +114,9 @@ func (err *Error) Error() string {
 	return err.message
 }
 
-// Unwrap exposes the retained cause to errors.Is and errors.As.
+// Unwrap returns the retained cause. Secret-aware callback paths retain a
+// protected cause that supports errors.Is without exposing the concrete
+// application error to errors.As.
 func (err *Error) Unwrap() error {
 	if err == nil {
 		return nil
@@ -140,6 +156,19 @@ func newClassifiedError(
 	message = sanitizeTerminal(message)
 
 	return &Error{kind: kind, message: message, cause: cause}
+}
+
+func newProtectedError(kind ErrorKind, message string, cause error) error {
+	if cause == nil {
+		return newClassifiedError(kind, message, nil, false)
+	}
+
+	return newClassifiedError(
+		kind,
+		message,
+		&protectedCause{cause: cause},
+		false,
+	)
 }
 
 func sentinelForKind(kind ErrorKind) error {

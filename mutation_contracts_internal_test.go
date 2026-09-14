@@ -5,6 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -197,7 +200,11 @@ func TestCompletionArgumentAndCandidateBoundsAreExact(t *testing.T) {
 		t.Fatalf("completionArgument(optional overflow) = %#v", argument)
 	}
 
-	application := &Application{limits: Limits{MaximumCompletionResults: 10, MaximumCompletionBytes: 6}}
+	application := &Application{limits: Limits{
+		MaximumCompletionProviderResults: 10,
+		MaximumCompletionResults:         10,
+		MaximumCompletionBytes:           6,
+	}}
 	bounded := application.boundCandidates([]CompletionCandidate{
 		{Value: "oversized", Description: "value"},
 		{Value: "exact", Description: "x"},
@@ -217,6 +224,38 @@ func TestCompletionArgumentAndCandidateBoundsAreExact(t *testing.T) {
 	bounded = application.boundCandidates([]CompletionCandidate{{Value: "a"}, {Value: "b"}})
 	if len(bounded) != 1 || bounded[0].Value != "a" {
 		t.Fatalf("result count bounds = %#v", bounded)
+	}
+	application.limits.MaximumCompletionBytes = 1
+	bounded = application.boundCandidates([]CompletionCandidate{
+		{Value: string([]byte{0xff})},
+		{Value: "a"},
+	})
+	if len(bounded) != 1 || bounded[0].Value != "a" {
+		t.Fatalf("sanitized expansion bounds = %#v", bounded)
+	}
+	application.limits.MaximumCompletionResults = 10
+	application.limits.MaximumCompletionBytes = 2
+	bounded = application.boundCandidates([]CompletionCandidate{
+		{Value: "x"},
+		{Value: "\x1ba"},
+	})
+	if len(bounded) != 1 || bounded[0].Value != "x" {
+		t.Fatalf("cumulative raw byte bounds = %#v", bounded)
+	}
+	for _, test := range []struct {
+		name      string
+		candidate CompletionCandidate
+		limit     int
+		want      bool
+	}{
+		{name: "empty exact", candidate: CompletionCandidate{}, limit: 0, want: true},
+		{name: "value over", candidate: CompletionCandidate{Value: "a"}, limit: 0},
+		{name: "description over", candidate: CompletionCandidate{Value: "a", Description: "bc"}, limit: 2},
+		{name: "combined exact", candidate: CompletionCandidate{Value: "a", Description: "b"}, limit: 2, want: true},
+	} {
+		if got := completionCandidateWithinRawByteLimit(test.candidate, test.limit); got != test.want {
+			t.Fatalf("completionCandidateWithinRawByteLimit(%s) = %t, want %t", test.name, got, test.want)
+		}
 	}
 }
 
@@ -405,6 +444,50 @@ type divergentOutputValue struct {
 func (value divergentOutputValue) MarshalJSON() ([]byte, error) { return json.Marshal(value.json) }
 func (value divergentOutputValue) String() string               { return value.human }
 
+type outputJSONOnly struct{}
+type outputTextOnly struct{}
+type outputStringOnly struct{}
+type outputFormatterOnly struct{}
+type outputErrorOnly struct{}
+type outputPointerJSONOnly struct{}
+type outputPointerTextOnly struct{}
+type outputPointerStringOnly struct{}
+type outputPointerFormatterOnly struct{}
+type outputPointerErrorOnly struct{}
+type recursiveOutputType struct{ Next *recursiveOutputType }
+type outputJSONWithField struct{ Value int }
+
+func (outputJSONOnly) MarshalJSON() ([]byte, error) { return []byte("null"), nil }
+func (outputJSONWithField) MarshalJSON() ([]byte, error) {
+	return []byte("null"), nil
+}
+func (outputTextOnly) MarshalText() ([]byte, error) { return nil, nil }
+func (outputStringOnly) String() string             { return "" }
+func (outputFormatterOnly) Format(fmt.State, rune)  {}
+func (outputErrorOnly) Error() string               { return "" }
+
+func (*outputPointerJSONOnly) MarshalJSON() ([]byte, error) { return []byte("null"), nil }
+func (*outputPointerTextOnly) MarshalText() ([]byte, error) { return nil, nil }
+func (*outputPointerStringOnly) String() string             { return "" }
+func (*outputPointerFormatterOnly) Format(fmt.State, rune)  {}
+func (*outputPointerErrorOnly) Error() string               { return "" }
+
+func outputStructType(tag string) reflect.Type {
+	return reflect.StructOf([]reflect.StructField{{
+		Name: "DescriptiveField",
+		Type: reflect.TypeFor[string](),
+		Tag:  reflect.StructTag(tag),
+	}})
+}
+
+func outputStructValue(tag string) any {
+	typ := outputStructType(tag)
+	value := reflect.New(typ).Elem()
+	value.Field(0).SetString("x")
+
+	return value.Interface()
+}
+
 func TestOutputAcceptsExactLimitsAndTracksCumulativeBytes(t *testing.T) {
 	t.Parallel()
 
@@ -445,6 +528,551 @@ func TestOutputAcceptsExactLimitsAndTracksCumulativeBytes(t *testing.T) {
 		if err := (&Output{}).SetData(value); !errors.Is(err, ErrOutput) {
 			t.Fatalf("SetData(%s overflow) = %v", name, err)
 		}
+	}
+}
+
+func TestOutputPreflightBoundsAmplificationCyclesAndDepth(t *testing.T) {
+	t.Parallel()
+
+	for name, value := range map[string]any{
+		"escaped expansion": strings.Repeat("&", maximumOutputBytes/6+1),
+		"cycle": func() any {
+			cycle := make(map[string]any)
+			cycle["self"] = cycle
+			return cycle
+		}(),
+		"depth": func() any {
+			var value any = "bounded"
+			for range maximumOutputDepth + 1 {
+				next := value
+				value = &next
+			}
+			return value
+		}(),
+	} {
+		if err := (&Output{}).SetData(value); !errors.Is(err, ErrOutput) {
+			t.Fatalf("SetData(%s) error = %v, want output classification", name, err)
+		}
+	}
+
+	raw := json.RawMessage(`{"status":"ok"}`)
+	if err := (&Output{}).SetData(raw); err != nil {
+		t.Fatalf("SetData(json.RawMessage) error = %v", err)
+	}
+}
+
+func TestOutputPreflightBoundsEncoderReachableTypeGraphs(t *testing.T) {
+	t.Parallel()
+
+	wrappers := map[string]func(reflect.Type) reflect.Type{
+		"map":     func(typ reflect.Type) reflect.Type { return reflect.MapOf(reflect.TypeFor[string](), typ) },
+		"pointer": reflect.PointerTo,
+		"slice":   reflect.SliceOf,
+		"struct": func(typ reflect.Type) reflect.Type {
+			return reflect.StructOf([]reflect.StructField{{Name: "Value", Type: typ}})
+		},
+	}
+	for name, wrap := range wrappers {
+		typ := reflect.TypeFor[int]()
+		for range maximumOutputDepth + 1 {
+			typ = wrap(typ)
+		}
+		if name == "struct" {
+			if err := newOutputTypeState().add(typ, 0); !errors.Is(err, ErrOutput) {
+				t.Fatalf("outputTypeState.add(%s type depth) error = %v, want output classification", name, err)
+			}
+		}
+		value := reflect.Zero(typ).Interface()
+		if _, err := validateOutputValue(value); !errors.Is(err, ErrOutput) {
+			t.Fatalf("validateOutputValue(%s type depth) error = %v, want output classification", name, err)
+		}
+	}
+
+	if _, err := validateOutputValue((*recursiveOutputType)(nil)); err != nil {
+		t.Fatalf("validateOutputValue(recursive type) error = %v", err)
+	}
+
+	countState := newOutputTypeState()
+	countState.nodes = maximumOutputTypeNodes
+	if err := countState.add(reflect.TypeFor[int](), 0); !errors.Is(err, ErrOutput) {
+		t.Fatalf("outputTypeState.add(over count) error = %v, want output classification", err)
+	}
+	exactCountState := newOutputTypeState()
+	exactCountState.nodes = maximumOutputTypeNodes - 1
+	if err := exactCountState.add(reflect.TypeFor[int](), 0); err != nil {
+		t.Fatalf("outputTypeState.add(exact count) error = %v", err)
+	}
+	fieldOverflowState := newOutputTypeState()
+	fieldOverflowState.nodes = maximumOutputTypeNodes - 1
+	if err := fieldOverflowState.add(reflect.TypeFor[struct{ Value int }](), 0); !errors.Is(err, ErrOutput) {
+		t.Fatalf("outputTypeState.add(field count overflow) error = %v, want output classification", err)
+	}
+	exactFieldCountState := newOutputTypeState()
+	exactFieldCountState.nodes = maximumOutputTypeNodes - 2
+	exactFieldCountState.seen[reflect.TypeFor[int]()] = struct{}{}
+	if err := exactFieldCountState.add(reflect.TypeFor[struct{ V int }](), 0); err != nil {
+		t.Fatalf("outputTypeState.add(exact field count) error = %v", err)
+	}
+	metadataState := newOutputTypeState()
+	metadataState.metadata = maximumOutputBytes
+	if err := metadataState.add(outputStructType(`json:"\\invalid"`), 0); !errors.Is(err, ErrOutput) {
+		t.Fatalf("outputTypeState.add(over metadata) error = %v, want output classification", err)
+	}
+	exactMetadataState := newOutputTypeState()
+	exactMetadataState.metadata = maximumOutputBytes - 1
+	if err := exactMetadataState.add(reflect.TypeFor[struct{ V int }](), 0); err != nil {
+		t.Fatalf("outputTypeState.add(exact metadata) error = %v", err)
+	}
+	serializerState := newOutputTypeState()
+	serializerState.metadata = maximumOutputBytes
+	if err := serializerState.add(reflect.TypeFor[outputJSONWithField](), 0); err != nil {
+		t.Fatalf("outputTypeState.add(JSON marshaler) error = %v", err)
+	}
+	if err := newOutputTypeState().add(nil, 0); err != nil {
+		t.Fatalf("outputTypeState.add(nil) error = %v", err)
+	}
+	exactDepthType := reflect.TypeFor[int]()
+	for range maximumOutputDepth {
+		exactDepthType = reflect.PointerTo(exactDepthType)
+	}
+	if err := newOutputTypeState().add(exactDepthType, 0); err != nil {
+		t.Fatalf("outputTypeState.add(exact depth) error = %v", err)
+	}
+}
+
+func TestOutputPreflightMirrorsJSONTagFallbackAndBoundsMetadata(t *testing.T) {
+	t.Parallel()
+
+	for name, value := range map[string]any{
+		"invalid name":     outputStructValue(`json:"\\invalid"`),
+		"dash with option": outputStructValue(`json:"-,omitempty"`),
+		"builtin omitzero": struct {
+			Value int `json:",omitzero"`
+		}{},
+	} {
+		size, err := estimateOutputSize(reflect.ValueOf(value), make(map[outputVisit]bool), 0)
+		if err != nil {
+			t.Fatalf("estimateOutputSize(%s tag) error = %v", name, err)
+		}
+		encoded, err := json.Marshal(value)
+		if err != nil {
+			t.Fatalf("json.Marshal(%s tag) error = %v", name, err)
+		}
+		if size.json < len(encoded) {
+			t.Fatalf("estimateOutputSize(%s tag) JSON bytes = %d, encoded = %d", name, size.json, len(encoded))
+		}
+	}
+
+	typ := reflect.StructOf([]reflect.StructField{{
+		Name: "Value",
+		Type: reflect.TypeFor[string](),
+		Tag:  reflect.StructTag(strings.Repeat("x", maximumOutputBytes+1)),
+	}})
+	if _, err := validateOutputValue(reflect.Zero(typ).Interface()); !errors.Is(err, ErrOutput) {
+		t.Fatalf("validateOutputValue(oversize struct tag) error = %v, want output classification", err)
+	}
+}
+
+func TestOutputPreflightBoundsRawMessageEncodingExpansion(t *testing.T) {
+	t.Parallel()
+
+	raw := json.RawMessage(`"` + strings.Repeat("&", maximumOutputBytes/6+1) + `"`)
+	if _, err := validateOutputValue(raw); !errors.Is(err, ErrOutput) {
+		t.Fatalf("validateOutputValue(expanding raw message) error = %v, want output classification", err)
+	}
+}
+
+func TestOutputPreflightBoundsCollectionCount(t *testing.T) {
+	t.Parallel()
+
+	if err := (&Output{}).SetData(make([]struct{}, maximumOutputElements)); err != nil {
+		t.Fatalf("SetData(exact collection limit) error = %v", err)
+	}
+	if err := (&Output{}).SetData(make([]struct{}, maximumOutputElements+1)); !errors.Is(err, ErrOutput) {
+		t.Fatalf("SetData(over collection limit) error = %v, want output classification", err)
+	}
+	exactMap := make(map[int]struct{}, maximumOutputElements)
+	for index := range maximumOutputElements {
+		exactMap[index] = struct{}{}
+	}
+	if _, err := estimateOutputSize(
+		reflect.ValueOf(exactMap), make(map[outputVisit]bool), 0,
+	); err != nil {
+		t.Fatalf("estimateOutputSize(exact map collection limit) error = %v", err)
+	}
+	exactMap[maximumOutputElements] = struct{}{}
+	if _, err := estimateOutputSize(
+		reflect.ValueOf(exactMap), make(map[outputVisit]bool), 0,
+	); !errors.Is(err, ErrOutput) {
+		t.Fatalf("estimateOutputSize(over map collection limit) error = %v, want output classification", err)
+	}
+}
+
+func TestOutputPreflightAccountsForBuiltInSerializationShapes(t *testing.T) {
+	t.Parallel()
+
+	number := 42
+	accepted := []any{
+		nil,
+		time.Second,
+		(*int)(nil),
+		&number,
+		true,
+		int64(-42),
+		uint64(42),
+		float64(42),
+		[2]string{"first", "second"},
+		[]string(nil),
+		[]string{"first", "second"},
+		map[string]int(nil),
+		map[string]int{"first": 1, "second": 2},
+		map[int]string{-1: "signed"},
+		map[uint]string{1: "unsigned"},
+		struct {
+			hidden  string
+			Visible int    `json:",string"`
+			Ignored string `json:"-"`
+			Named   string `json:"named"`
+		}{hidden: "private", Visible: 42, Ignored: "ignored", Named: "public"},
+		"quote \" slash \\ control \x01 invalid " + string([]byte{0xff}),
+	}
+	for index, value := range accepted {
+		if err := (&Output{}).SetData(value); err != nil {
+			t.Fatalf("SetData(accepted[%d]) error = %v", index, err)
+		}
+	}
+
+	var nilInterface any
+	if _, err := estimateOutputSize(
+		reflect.ValueOf(&nilInterface).Elem(), make(map[outputVisit]bool), 0,
+	); err != nil {
+		t.Fatalf("estimateOutputSize(nil interface) error = %v", err)
+	}
+
+	type node struct{ Next *node }
+	pointerCycle := new(node)
+	pointerCycle.Next = pointerCycle
+	sliceCycle := make([]any, 1)
+	sliceCycle[0] = sliceCycle
+	large := strings.Repeat("x", maximumOutputBytes)
+	rejected := []any{
+		pointerCycle,
+		sliceCycle,
+		[]any{divergentOutputValue{}},
+		append([]string{large}, "overflow"),
+		map[divergentOutputValue]int{{}: 1},
+		map[string]any{"value": divergentOutputValue{}},
+		map[string]string{"value": large},
+		map[bool]string{true: "unsupported"},
+		struct{ Value divergentOutputValue }{},
+		struct{ Value string }{Value: large},
+		json.RawMessage(strings.Repeat(" ", maximumOutputBytes/4+1)),
+		make(chan int),
+	}
+	for index, value := range rejected {
+		if err := (&Output{}).SetData(value); !errors.Is(err, ErrOutput) {
+			t.Fatalf("SetData(rejected[%d]) error = %v, want output classification", index, err)
+		}
+	}
+
+	invalidBytes := strings.Repeat(string([]byte{0xff}), maximumOutputBytes/3+1)
+	if err := (&Output{}).Info(invalidBytes); !errors.Is(err, ErrOutput) {
+		t.Fatalf("Info(invalid UTF-8 amplification) error = %v, want output classification", err)
+	}
+	controlBytes := strings.Repeat("\x01", maximumOutputBytes+1)
+	if err := (&Output{}).Info(controlBytes); !errors.Is(err, ErrOutput) {
+		t.Fatalf("Info(control-only input) error = %v, want output classification", err)
+	}
+	if err := (&Output{}).SetData(struct{ hidden string }{hidden: invalidBytes}); !errors.Is(err, ErrOutput) {
+		t.Fatalf("SetData(hidden invalid UTF-8) error = %v, want output classification", err)
+	}
+}
+
+func TestOutputSizeEstimationExactContracts(t *testing.T) {
+	t.Parallel()
+
+	assertSize := func(value any, want outputSize) {
+		t.Helper()
+		got, err := estimateOutputSize(
+			reflect.ValueOf(value), make(map[outputVisit]bool), 0,
+		)
+		if err != nil || got != want {
+			t.Fatalf("estimateOutputSize(%T) = %#v, %v; want %#v", value, got, err, want)
+		}
+	}
+
+	assertSize(nil, outputSize{json: 4, human: 5})
+	assertSize(time.Second, outputSize{json: 21, human: 32})
+	assertSize(json.RawMessage("null"), outputSize{json: 4, human: 18})
+	assertSize((*int)(nil), outputSize{json: 4, human: 5})
+	number := 42
+	assertSize(&number, outputSize{json: 2, human: 2 + strconv.IntSize/4})
+	assertSize("a", outputSize{json: 3, human: 1})
+	assertSize(true, outputSize{json: 5, human: 5})
+	assertSize(int64(-42), outputSize{json: 3, human: 3})
+	assertSize(uint64(42), outputSize{json: 2, human: 2})
+	assertSize(float64(42), outputSize{json: 32, human: 32})
+	assertSize([1]string{"a"}, outputSize{json: 5, human: 3})
+	assertSize([2]string{"a", "bb"}, outputSize{json: 10, human: 6})
+	assertSize([3]string{"a", "bb", "ccc"}, outputSize{json: 16, human: 10})
+	assertSize([]string(nil), outputSize{json: 4, human: 2})
+	assertSize([]string{"a"}, outputSize{json: 5, human: 3})
+	assertSize([]string{"a", "bb"}, outputSize{json: 10, human: 6})
+	assertSize([]string{"a", "bb", "ccc"}, outputSize{json: 16, human: 10})
+	assertSize(map[string]int(nil), outputSize{json: 4, human: 5})
+	assertSize(map[string]int{"a": 1}, outputSize{json: 7, human: 8})
+	assertSize(map[string]int{"a": 1, "bb": 22}, outputSize{json: 15, human: 14})
+	assertSize(map[string]int{"a": 1, "bb": 22, "ccc": 333}, outputSize{json: 25, human: 22})
+	assertSize(struct {
+		hidden  string
+		Visible int    `json:",string"`
+		Ignored string `json:"-"`
+		Named   string `json:"named"`
+	}{hidden: "private", Visible: 42, Ignored: "ignored", Named: "public"},
+		outputSize{json: 43, human: 27})
+	assertSize(make(chan int), outputSize{json: 64, human: 64})
+
+	var nilInterface any
+	got, err := estimateOutputSize(
+		reflect.ValueOf(&nilInterface).Elem(), make(map[outputVisit]bool), 0,
+	)
+	if err != nil || got != (outputSize{json: 4, human: 5}) {
+		t.Fatalf("estimateOutputSize(nil interface) = %#v, %v", got, err)
+	}
+	if _, err := estimateOutputSize(
+		reflect.ValueOf("depth"), make(map[outputVisit]bool), maximumOutputDepth,
+	); err != nil {
+		t.Fatalf("estimateOutputSize(exact depth) error = %v", err)
+	}
+	if _, err := estimateOutputSize(
+		reflect.ValueOf("depth"), make(map[outputVisit]bool), maximumOutputDepth+1,
+	); !errors.Is(err, ErrOutput) {
+		t.Fatalf("estimateOutputSize(over depth) error = %v", err)
+	}
+
+	for name, value := range map[string]any{
+		"json value":        outputJSONOnly{},
+		"text value":        outputTextOnly{},
+		"string value":      outputStringOnly{},
+		"formatter value":   outputFormatterOnly{},
+		"error value":       outputErrorOnly{},
+		"json pointer":      outputPointerJSONOnly{},
+		"text pointer":      outputPointerTextOnly{},
+		"string pointer":    outputPointerStringOnly{},
+		"formatter pointer": outputPointerFormatterOnly{},
+		"error pointer":     outputPointerErrorOnly{},
+	} {
+		if !hasCustomSerialization(reflect.TypeOf(value)) {
+			t.Fatalf("hasCustomSerialization(%s) = false", name)
+		}
+	}
+	if hasCustomSerialization(reflect.TypeOf(struct{}{})) ||
+		hasCustomSerialization(reflect.TypeOf(new(struct{}))) {
+		t.Fatal("plain values report custom serialization")
+	}
+
+	for _, test := range []struct {
+		value any
+		want  outputSize
+	}{
+		{value: int64(-42), want: outputSize{json: 5, human: 3}},
+		{value: uint64(42), want: outputSize{json: 4, human: 2}},
+	} {
+		got, keyErr := estimateMapKeySize(
+			reflect.ValueOf(test.value), make(map[outputVisit]bool), 0,
+		)
+		if keyErr != nil || got != test.want {
+			t.Fatalf("estimateMapKeySize(%T) = %#v, %v; want %#v", test.value, got, keyErr, test.want)
+		}
+	}
+	if _, err := estimateMapKeySize(
+		reflect.ValueOf(true), make(map[outputVisit]bool), 0,
+	); !errors.Is(err, ErrOutput) {
+		t.Fatalf("estimateMapKeySize(bool) error = %v", err)
+	}
+}
+
+func TestOutputSizeHelpersExactBoundaries(t *testing.T) {
+	t.Parallel()
+
+	for value, want := range map[string]int{
+		"":                   2,
+		"a":                  3,
+		" ":                  3,
+		"\\":                 4,
+		"\"":                 4,
+		"\x01":               8,
+		"<":                  8,
+		">":                  8,
+		"&":                  8,
+		"\u2028":             8,
+		"\u2029":             8,
+		"é":                  4,
+		string([]byte{0xff}): 8,
+	} {
+		if got := jsonStringSize(value); got != want {
+			t.Fatalf("jsonStringSize(%q) = %d, want %d", value, got, want)
+		}
+	}
+	if got := jsonStringSize(strings.Repeat("a", maximumOutputBytes-2)); got != maximumOutputBytes {
+		t.Fatalf("jsonStringSize(exact) = %d", got)
+	}
+	if got := jsonStringSize(strings.Repeat("a", maximumOutputBytes-1)); got != maximumOutputBytes+1 {
+		t.Fatalf("jsonStringSize(over) = %d", got)
+	}
+
+	for value, want := range map[string]int{
+		"":                   0,
+		"a":                  1,
+		"\x01":               0,
+		"é":                  2,
+		string([]byte{0xff}): 3,
+	} {
+		if got := humanStringSize(value); got != want {
+			t.Fatalf("humanStringSize(%q) = %d, want %d", value, got, want)
+		}
+	}
+	if got := humanStringSize(strings.Repeat("a", maximumOutputBytes)); got != maximumOutputBytes {
+		t.Fatalf("humanStringSize(exact) = %d", got)
+	}
+	if got := humanStringSize(strings.Repeat("a", maximumOutputBytes+1)); got != maximumOutputBytes+1 {
+		t.Fatalf("humanStringSize(over) = %d", got)
+	}
+	if got := humanStringSize(strings.Repeat("\x01", maximumOutputBytes+2)); got != maximumOutputBytes+1 {
+		t.Fatalf("humanStringSize(control-only over) = %d", got)
+	}
+	if got := rawMessageJSONSize(bytes.Repeat([]byte{'a'}, maximumOutputBytes+2)); got != maximumOutputBytes+1 {
+		t.Fatalf("rawMessageJSONSize(over) = %d", got)
+	}
+	if got := rawMessageJSONSize([]byte{0xe2, 0x80, 0xa8}); got != 6 {
+		t.Fatalf("rawMessageJSONSize(U+2028) = %d, want 6", got)
+	}
+	for name, raw := range map[string][]byte{
+		"truncated lead":         {0xe2},
+		"truncated continuation": {0xe2, 0x80},
+		"wrong continuation":     {0xe2, 0x81, 0xa8},
+		"wrong trailing byte":    {0xe2, 0x80, 0xaa},
+	} {
+		if got := rawMessageJSONSize(raw); got != len(raw) {
+			t.Fatalf("rawMessageJSONSize(%s) = %d, want %d", name, got, len(raw))
+		}
+	}
+	exactRaw := bytes.Repeat([]byte{'a'}, maximumOutputBytes)
+	if got := rawMessageJSONSize(exactRaw); got != maximumOutputBytes {
+		t.Fatalf("rawMessageJSONSize(exact) = %d", got)
+	}
+	expandingRaw := append(bytes.Repeat([]byte{'a'}, maximumOutputBytes-13), '&', '&', '&')
+	if got := rawMessageJSONSize(expandingRaw); got != maximumOutputBytes+1 {
+		t.Fatalf("rawMessageJSONSize(late expansion) = %d", got)
+	}
+	if hasCustomZeroCheck(reflect.TypeFor[*int]()) {
+		t.Fatal("pointer type unexpectedly has a custom zero check")
+	}
+	if !jsonTagOption("omitempty,string", "string") {
+		t.Fatal("jsonTagOption() did not inspect the second option")
+	}
+	for name, want := range map[string]bool{
+		"":   false,
+		"a":  true,
+		"9":  true,
+		"\\": false,
+	} {
+		if got := validJSONTagName(name); got != want {
+			t.Fatalf("validJSONTagName(%q) = %t, want %t", name, got, want)
+		}
+	}
+	humanExpansion := string(append(bytes.Repeat([]byte{'a'}, maximumOutputBytes-3), 0xff, 0xff))
+	if got := humanStringSize(humanExpansion); got != maximumOutputBytes+1 {
+		t.Fatalf("humanStringSize(late expansion) = %d", got)
+	}
+
+	if got := boundedSum(maximumOutputBytes, 0); got != maximumOutputBytes {
+		t.Fatalf("boundedSum(exact) = %d", got)
+	}
+	if got := boundedSum(maximumOutputBytes, 1); got != maximumOutputBytes+1 {
+		t.Fatalf("boundedSum(over) = %d", got)
+	}
+	if got := boundedSum(maximumOutputBytes-1, 3); got != maximumOutputBytes+1 {
+		t.Fatalf("boundedSum(clamped overflow) = %d", got)
+	}
+	for _, test := range []struct {
+		left  int
+		right int
+		want  int
+	}{
+		{left: 0, right: maximumOutputBytes + 1, want: 0},
+		{left: maximumOutputBytes, right: 1, want: maximumOutputBytes},
+		{left: maximumOutputBytes, right: 2, want: maximumOutputBytes + 1},
+		{left: 2, right: 3, want: 6},
+	} {
+		if got := boundedProduct(test.left, test.right); got != test.want {
+			t.Fatalf("boundedProduct(%d, %d) = %d, want %d", test.left, test.right, got, test.want)
+		}
+	}
+	if outputChildDepth(0) != 1 || outputChildDepth(maximumOutputDepth) != maximumOutputDepth+1 {
+		t.Fatalf("outputChildDepth boundaries = %d/%d", outputChildDepth(0), outputChildDepth(maximumOutputDepth))
+	}
+	if outputSeparatorSize(0) != 0 || outputSeparatorSize(1) != 1 || outputSeparatorSize(2) != 1 {
+		t.Fatalf("outputSeparatorSize(0/1/2) = %d/%d/%d", outputSeparatorSize(0), outputSeparatorSize(1), outputSeparatorSize(2))
+	}
+	for _, size := range []outputSize{
+		{json: maximumOutputBytes + 1},
+		{human: maximumOutputBytes + 1},
+		{json: maximumOutputBytes + 1, human: maximumOutputBytes + 1},
+	} {
+		if !outputSizeExceeded(size) {
+			t.Fatalf("outputSizeExceeded(%#v) = false", size)
+		}
+	}
+	for _, size := range []outputSize{
+		{},
+		{json: maximumOutputBytes},
+		{human: maximumOutputBytes},
+		{json: maximumOutputBytes, human: maximumOutputBytes},
+	} {
+		if outputSizeExceeded(size) {
+			t.Fatalf("outputSizeExceeded(%#v) = true", size)
+		}
+	}
+
+	if size, err := validateOutputValue(strings.Repeat("a", maximumOutputBytes-2)); err != nil || size.json != maximumOutputBytes {
+		t.Fatalf("validateOutputValue(exact JSON) = %#v, %v", size, err)
+	}
+	if _, err := validateOutputValue(strings.Repeat("a", maximumOutputBytes-1)); !errors.Is(err, ErrOutput) {
+		t.Fatalf("validateOutputValue(over JSON) error = %v", err)
+	}
+	invalid := strings.Repeat(string([]byte{0xff}), (maximumOutputBytes-2)/3) + "xx"
+	if size, err := validateOutputValue(struct{ hidden string }{hidden: invalid}); err != nil || size.human != maximumOutputBytes {
+		t.Fatalf("validateOutputValue(exact human) = %#v, %v", size, err)
+	}
+	if _, err := validateOutputValue(struct{ hidden string }{hidden: invalid + "x"}); !errors.Is(err, ErrOutput) {
+		t.Fatalf("validateOutputValue(over human) error = %v", err)
+	}
+}
+
+func TestProtectedErrorAndSecretClassificationEdgeCases(t *testing.T) {
+	t.Parallel()
+
+	if err := newProtectedError(ErrorKindOutput, "safe", nil); !errors.Is(err, ErrOutput) {
+		t.Fatalf("newProtectedError(nil cause) = %v, want output classification", err)
+	}
+	if commandProtectsSecrets(nil) {
+		t.Fatal("nil command protects secrets")
+	}
+	var nilCause *protectedCause
+	if nilCause.Is(errors.New("target")) {
+		t.Fatal("nil protected cause matched a target")
+	}
+	classified := newClassifiedError(ErrorKindOutput, "safe", nil, false)
+	err := classifyPhaseError(
+		context.Background(),
+		&compiledCommand{effective: []optionSpec{{secret: true}}},
+		"callback failed",
+		classified,
+	)
+	var result *Error
+	if !errors.As(err, &result) || result.Kind() != ErrorKindOutput {
+		t.Fatalf("classifyPhaseError() = %v, want protected output classification", err)
 	}
 }
 
@@ -518,6 +1146,23 @@ func TestCleanupUsesTheDocumentedDefaultDeadline(t *testing.T) {
 	}
 	if remaining < 29*time.Second || remaining > 30*time.Second {
 		t.Fatalf("cleanup deadline remaining = %v", remaining)
+	}
+}
+
+func TestCleanupWaitsForCooperativeDeadlineHandling(t *testing.T) {
+	t.Parallel()
+
+	started := time.Now()
+	command := &compiledCommand{cleanup: []Handler{func(ctx context.Context, _ Invocation) error {
+		<-ctx.Done()
+		return ctx.Err()
+	}}}
+	err := executeCleanupWithin(context.Background(), command, Invocation{}, 10*time.Millisecond)
+	if !errors.Is(err, ErrCleanup) || !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("executeCleanupWithin() error = %v, want cleanup deadline", err)
+	}
+	if elapsed := time.Since(started); elapsed < 5*time.Millisecond || elapsed > time.Second {
+		t.Fatalf("cooperative cleanup elapsed = %v, want deadline-bounded return", elapsed)
 	}
 }
 

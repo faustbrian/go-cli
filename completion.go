@@ -33,6 +33,12 @@ func (application *Application) Complete(
 		return nil, newInternalError("complete with a nil context", nil)
 	}
 	if err := ctx.Err(); err != nil {
+		if commandTreeProtectsSecrets(application.root) {
+			return nil, classifyContextErrorWithProtection(
+				contextErrorWithCause(ctx), true,
+			)
+		}
+
 		return nil, err
 	}
 	if err := validateArgv(argv, application.limits); err != nil {
@@ -269,19 +275,29 @@ func (application *Application) dynamicCandidates(
 	if provider == nil {
 		return nil, newInternalError("invoke a nil completion provider", nil)
 	}
+	protectSecrets := commandTreeProtectsSecrets(request.Command.command)
 	candidates, err := provider(ctx, request)
 	if err != nil {
 		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			if protectSecrets {
+				return nil, newProtectedError(
+					ErrorKindCompletion, "dynamic completion canceled", err,
+				)
+			}
+
 			return nil, err
 		}
-		return nil, newClassifiedError(
-			ErrorKindCompletion,
-			"dynamic completion failed",
-			err,
-			false,
+		return nil, newCallbackError(
+			request.Command.command, ErrorKindCompletion, "dynamic completion failed", err,
 		)
 	}
 	if err := ctx.Err(); err != nil {
+		if protectSecrets {
+			return nil, classifyContextErrorWithProtection(
+				contextErrorWithCause(ctx), true,
+			)
+		}
+
 		return nil, err
 	}
 
@@ -291,11 +307,19 @@ func (application *Application) dynamicCandidates(
 func (application *Application) boundCandidates(
 	candidates []CompletionCandidate,
 ) []CompletionCandidate {
-	limit := application.limits.MaximumCompletionResults
-	result := make([]CompletionCandidate, 0, min(len(candidates), limit))
-	seen := make(map[string]struct{}, len(candidates))
+	resultLimit := application.limits.MaximumCompletionResults
+	inspectionLimit := min(
+		len(candidates), application.limits.MaximumCompletionProviderResults,
+	)
+	result := make([]CompletionCandidate, 0, min(inspectionLimit, resultLimit))
+	seen := make(map[string]struct{}, min(inspectionLimit, resultLimit))
 	bytes := 0
-	for _, candidate := range candidates {
+	for _, candidate := range candidates[:inspectionLimit] {
+		if !completionCandidateWithinRawByteLimit(
+			candidate, application.limits.MaximumCompletionBytes-bytes,
+		) {
+			continue
+		}
 		candidate.Value = sanitizeTerminal(candidate.Value)
 		candidate.Description = sanitizeTerminal(candidate.Description)
 		if candidate.Value == "" {
@@ -305,7 +329,7 @@ func (application *Application) boundCandidates(
 			continue
 		}
 		size := len(candidate.Value) + len(candidate.Description)
-		if len(result) >= limit {
+		if len(result) >= resultLimit {
 			return result
 		}
 		if bytes+size > application.limits.MaximumCompletionBytes {
@@ -317,4 +341,25 @@ func (application *Application) boundCandidates(
 	}
 
 	return result
+}
+
+func completionCandidateWithinRawByteLimit(
+	candidate CompletionCandidate,
+	limit int,
+) bool {
+	if len(candidate.Value) > limit {
+		return false
+	}
+
+	return len(candidate.Description) <= limit-len(candidate.Value)
+}
+
+func completionSelectedCommand(root *compiledCommand, argv []string) *compiledCommand {
+	tokens := argv
+	if len(argv) > 0 {
+		tokens = argv[:len(argv)-1]
+	}
+	command, _, _ := completionPosition(root, tokens)
+
+	return command
 }

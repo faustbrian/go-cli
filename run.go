@@ -11,7 +11,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/faustbrian/go-cli/internal/engine"
+	"github.com/faustbrian/go-cli/v2/internal/engine"
 )
 
 const defaultCleanupTimeout = 30 * time.Second
@@ -103,20 +103,27 @@ func (application *Application) run(ctx context.Context, request Request) Result
 	}
 	switch ctx { //nolint:gocritic // Intentional mutation-safe control flow.
 	case nil:
-		return finalize(streams, request.Output, nil, output, newInternalError("run with a nil context", nil))
+		return finalizeUnselected(
+			streams, request.Output, application.root, output,
+			newInternalError("run with a nil context", nil),
+		)
 	}
+	protectSecrets := commandTreeProtectsSecrets(application.root)
 	if !validOutputMode(request.Output.Mode) {
-		return finalize(streams, OutputPolicy{}, nil, output, newInternalError("invalid output mode", nil))
+		return finalizeUnselected(
+			streams, OutputPolicy{}, application.root, output,
+			newInternalError("invalid output mode", nil),
+		)
 	}
-	switch err := contextError(ctx); err {
+	switch err := contextErrorWithProtection(ctx, protectSecrets); err {
 	case nil:
 	default:
-		return finalize(streams, request.Output, nil, output, err)
+		return finalizeUnselected(streams, request.Output, application.root, output, err)
 	}
 	switch err := validateArgv(request.Args, application.limits); err {
 	case nil:
 	default:
-		return finalize(streams, request.Output, nil, output, err)
+		return finalizeUnselected(streams, request.Output, application.root, output, err)
 	}
 	if len(request.Args) > 0 {
 		switch request.Args[0] {
@@ -155,32 +162,33 @@ func (application *Application) runCommand(
 		)
 	}
 	if ctx == nil {
-		return finalize(
+		return finalizeUnselected(
 			streams,
 			request.Output,
-			nil,
+			application.root,
 			output,
 			newInternalError("run with a nil context", nil),
 		)
 	}
+	protectSecrets := commandTreeProtectsSecrets(application.root)
 	if !validOutputMode(request.Output.Mode) {
-		return finalize(
+		return finalizeUnselected(
 			streams,
 			OutputPolicy{},
-			nil,
+			application.root,
 			output,
 			newInternalError("invalid output mode", nil),
 		)
 	}
-	switch err := contextError(ctx); err {
+	switch err := contextErrorWithProtection(ctx, protectSecrets); err {
 	case nil:
 	default:
-		return finalize(streams, request.Output, nil, output, err)
+		return finalizeUnselected(streams, request.Output, application.root, output, err)
 	}
 	switch err := validateArgv(request.Args, application.limits); err {
 	case nil:
 	default:
-		return finalize(streams, request.Output, nil, output, err)
+		return finalizeUnselected(streams, request.Output, application.root, output, err)
 	}
 
 	return application.runParsed(ctx, request, streams, output)
@@ -205,13 +213,17 @@ func (application *Application) runParsed(
 	switch err {
 	case nil:
 	default:
-		switch contextErr := contextError(ctx); contextErr {
+		switch contextErr := contextErrorWithProtection(
+			ctx, commandTreeProtectsSecrets(application.root),
+		); contextErr {
 		case nil:
 		default:
-			return finalize(streams, request.Output, nil, output, contextErr)
+			return finalizeUnselected(
+				streams, request.Output, application.root, output, contextErr,
+			)
 		}
 		kind := classifyParseFailure(err)
-		return finalize(streams, request.Output, nil, output, newClassifiedError(
+		return finalizeUnselected(streams, request.Output, application.root, output, newClassifiedError(
 			kind,
 			"invalid command invocation",
 			err,
@@ -222,7 +234,10 @@ func (application *Application) runParsed(
 	// A switch keeps a nil-selection mutation on a bounded return path.
 	switch selected { //nolint:gocritic // The single case is intentional mutation-safe control flow.
 	case nil:
-		return finalize(streams, request.Output, nil, output, newInternalError("parser selected an unknown command", nil))
+		return finalizeUnselected(
+			streams, request.Output, application.root, output,
+			newInternalError("parser selected an unknown command", nil),
+		)
 	}
 	switch parsed.Action {
 	case engine.ActionRun:
@@ -265,17 +280,14 @@ func (application *Application) runParsed(
 	}
 	for _, validation := range selected.validations {
 		if err := validation(ctx, input); err != nil {
-			if contextErr := classifyPhaseContextError(ctx, err); contextErr != nil {
+			if contextErr := classifyPhaseContextError(ctx, selected, err); contextErr != nil {
 				return finalize(streams, request.Output, selected, output, contextErr)
 			}
-			return finalize(streams, request.Output, selected, output, newClassifiedError(
-				ErrorKindValidation,
-				"command validation failed",
-				err,
-				true,
+			return finalize(streams, request.Output, selected, output, newCallbackError(
+				selected, ErrorKindValidation, "command validation failed", err,
 			))
 		}
-		if err := contextError(ctx); err != nil {
+		if err := contextErrorForCommand(ctx, selected); err != nil {
 			return finalize(streams, request.Output, selected, output, err)
 		}
 	}
@@ -328,6 +340,8 @@ func (application *Application) runCompletionBoundary(
 	withoutDescriptions bool,
 	streams IO,
 ) Result {
+	selected := completionSelectedCommand(application.root, argv)
+	protectSecrets := commandTreeProtectsSecrets(selected)
 	candidates, completionErr := application.Complete(ctx, argv)
 	directive := 4
 	if completionErr != nil {
@@ -351,24 +365,21 @@ func (application *Application) runCompletionBoundary(
 	terminalErr := completionErr
 	switch {
 	case errors.Is(completionErr, context.Canceled):
-		terminalErr = classifyContextError(completionErr)
+		terminalErr = classifyContextErrorWithProtection(completionErr, protectSecrets)
 	case errors.Is(completionErr, context.DeadlineExceeded):
-		terminalErr = classifyContextError(completionErr)
+		terminalErr = classifyContextErrorWithProtection(completionErr, protectSecrets)
 	}
 	if err := writeAll(streams.Stdout, []byte(protocol.String())); err != nil {
-		outputErr := newClassifiedError(
-			ErrorKindOutput,
-			"render completion protocol",
-			err,
-			true,
+		outputErr := newCallbackErrorWithProtection(
+			protectSecrets, ErrorKindOutput, "render completion protocol", err,
 		)
 		terminalErr = joinFailures(terminalErr, outputErr)
 	}
 	if terminalErr != nil {
-		return failureResult(application.root, terminalErr)
+		return failureResult(selected, terminalErr)
 	}
 
-	return Result{Command: CommandMetadata{command: application.root}}
+	return Result{Command: CommandMetadata{command: selected}}
 }
 
 func executeLifecycle(
@@ -384,16 +395,16 @@ func executeLifecycle(
 			return newInternalError("middleware continued with a nil context", nil)
 		}
 		lifecycleContext = nextContext
-		switch err := contextError(nextContext); err {
+		switch err := contextErrorForCommand(nextContext, command); err {
 		case nil:
 		default:
 			return err
 		}
 		for _, hook := range command.preRun {
 			if err := hook(nextContext, invocation); err != nil {
-				return classifyPhaseError(nextContext, "pre-run failed", err)
+				return classifyPhaseError(nextContext, command, "pre-run failed", err)
 			}
-			if err := contextError(nextContext); err != nil {
+			if err := contextErrorForCommand(nextContext, command); err != nil {
 				return err
 			}
 		}
@@ -401,9 +412,9 @@ func executeLifecycle(
 		case nil:
 		default:
 			if err := command.handler(nextContext, invocation); err != nil {
-				return classifyPhaseError(nextContext, "command execution failed", err)
+				return classifyPhaseError(nextContext, command, "command execution failed", err)
 			}
-			switch err := contextError(nextContext); err {
+			switch err := contextErrorForCommand(nextContext, command); err {
 			case nil:
 			default:
 				return err
@@ -411,9 +422,9 @@ func executeLifecycle(
 		}
 		for _, hook := range command.postRun {
 			if err := hook(nextContext, invocation); err != nil {
-				return classifyPhaseError(nextContext, "post-run failed", err)
+				return classifyPhaseError(nextContext, command, "post-run failed", err)
 			}
-			switch err := contextError(nextContext); err {
+			switch err := contextErrorForCommand(nextContext, command); err {
 			case nil:
 			default:
 				return err
@@ -435,7 +446,7 @@ func executeLifecycle(
 			case nil:
 				return newInternalError("invoke middleware with a nil context", nil)
 			}
-			switch err := contextError(nextContext); err {
+			switch err := contextErrorForCommand(nextContext, command); err {
 			case nil:
 			default:
 				return err
@@ -444,17 +455,18 @@ func executeLifecycle(
 			err := middleware(nextContext, metadata, continuation.next)
 			continuation.closeAndWait()
 			if err != nil {
-				if _, ok := errors.AsType[*Error](err); ok {
+				if _, ok := errors.AsType[*Error](err); ok &&
+					!commandProtectsSecrets(command) {
 					return err
 				}
 
-				return classifyPhaseError(nextContext, "command middleware failed", err)
+				return classifyPhaseError(nextContext, command, "command middleware failed", err)
 			}
-			if err := contextError(lifecycleContext); err != nil {
+			if err := contextErrorForCommand(lifecycleContext, command); err != nil {
 				return err
 			}
 
-			return contextError(nextContext)
+			return contextErrorForCommand(nextContext, command)
 		}
 	}
 	if err := next(ctx); err != nil {
@@ -519,23 +531,29 @@ func executeCleanup(
 	command *compiledCommand,
 	invocation Invocation,
 ) error {
+	return executeCleanupWithin(ctx, command, invocation, defaultCleanupTimeout)
+}
+
+func executeCleanupWithin(
+	ctx context.Context,
+	command *compiledCommand,
+	invocation Invocation,
+	timeout time.Duration,
+) error {
 	if len(command.cleanup) == 0 {
 		return nil
 	}
 	cleanupContext, cancel := context.WithTimeout(
 		context.WithoutCancel(ctx),
-		defaultCleanupTimeout,
+		timeout,
 	)
 	defer cancel()
 
 	var result error
 	for index := len(command.cleanup) - 1; index >= 0; index-- {
 		if err := command.cleanup[index](cleanupContext, invocation); err != nil {
-			classified := newClassifiedError(
-				ErrorKindCleanup,
-				"command cleanup failed",
-				err,
-				true,
+			classified := newCallbackError(
+				command, ErrorKindCleanup, "command cleanup failed", err,
 			)
 			result = joinFailures(result, classified)
 		}
@@ -544,23 +562,95 @@ func executeCleanup(
 	return result
 }
 
-func classifyPhaseError(ctx context.Context, message string, err error) error {
-	if contextErr := classifyPhaseContextError(ctx, err); contextErr != nil {
+func classifyPhaseError(
+	ctx context.Context,
+	command *compiledCommand,
+	message string,
+	err error,
+) error {
+	if contextErr := classifyPhaseContextError(ctx, command, err); contextErr != nil {
 		return contextErr
 	}
-	if _, ok := errors.AsType[*Error](err); ok {
+	if _, ok := errors.AsType[*Error](err); ok && !commandProtectsSecrets(command) {
 		return err
 	}
 
-	return newClassifiedError(ErrorKindCommand, message, err, true)
+	kind := ErrorKindCommand
+	if classified, ok := errors.AsType[*Error](err); ok {
+		kind = classified.Kind()
+	}
+
+	return newCallbackError(command, kind, message, err)
 }
 
-func classifyPhaseContextError(ctx context.Context, err error) error {
+func newCallbackError(
+	command *compiledCommand,
+	kind ErrorKind,
+	message string,
+	cause error,
+) error {
+	return newCallbackErrorWithProtection(
+		commandProtectsSecrets(command), kind, message, cause,
+	)
+}
+
+func newCallbackErrorWithProtection(
+	protectSecrets bool,
+	kind ErrorKind,
+	message string,
+	cause error,
+) error {
+	if protectSecrets {
+		return newProtectedError(kind, message, cause)
+	}
+
+	return newClassifiedError(kind, message, cause, true)
+}
+
+func commandProtectsSecrets(command *compiledCommand) bool {
+	if command == nil {
+		return false
+	}
+	for _, argument := range command.arguments {
+		if argument.secret {
+			return true
+		}
+	}
+	for _, option := range command.effective {
+		if option.secret {
+			return true
+		}
+	}
+
+	return false
+}
+
+func commandTreeProtectsSecrets(command *compiledCommand) bool {
+	if commandProtectsSecrets(command) {
+		return true
+	}
+	if command == nil {
+		return false
+	}
+	for _, child := range command.children {
+		if commandTreeProtectsSecrets(child) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func classifyPhaseContextError(
+	ctx context.Context,
+	command *compiledCommand,
+	err error,
+) error {
 	if ctx.Err() == nil {
 		return nil
 	}
 	if errors.Is(err, ctx.Err()) || errors.Is(err, contextErrorWithCause(ctx)) {
-		return classifyContextError(contextErrorWithCause(ctx))
+		return classifyContextErrorForCommand(contextErrorWithCause(ctx), command)
 	}
 
 	return nil
@@ -883,6 +973,31 @@ func finalize(
 	output *Output,
 	terminalErr error,
 ) Result {
+	return finalizeWithProtection(
+		streams, policy, command, output, terminalErr, commandProtectsSecrets(command),
+	)
+}
+
+func finalizeUnselected(
+	streams IO,
+	policy OutputPolicy,
+	root *compiledCommand,
+	output *Output,
+	terminalErr error,
+) Result {
+	return finalizeWithProtection(
+		streams, policy, nil, output, terminalErr, commandTreeProtectsSecrets(root),
+	)
+}
+
+func finalizeWithProtection(
+	streams IO,
+	policy OutputPolicy,
+	command *compiledCommand,
+	output *Output,
+	terminalErr error,
+	protectSecrets bool,
+) Result {
 	var renderErr error
 	if terminalErr != nil {
 		renderErr = renderFailure(streams.Stdout, streams.Stderr, policy, terminalErr)
@@ -890,7 +1005,9 @@ func finalize(
 		renderErr = renderSuccess(streams.Stdout, policy, output)
 	}
 	if renderErr != nil {
-		outputErr := newClassifiedError(ErrorKindOutput, "render command output", renderErr, true)
+		outputErr := newCallbackErrorWithProtection(
+			protectSecrets, ErrorKindOutput, "render command output", renderErr,
+		)
 		terminalErr = joinFailures(terminalErr, outputErr)
 	}
 	if terminalErr != nil {
@@ -940,11 +1057,8 @@ func finalizeSignal(
 	kind ErrorKind,
 ) Result {
 	if renderErr := renderSuccess(streams.Stdout, policy, output); renderErr != nil {
-		return failureResult(command, newClassifiedError(
-			ErrorKindOutput,
-			"render command output",
-			renderErr,
-			true,
+		return failureResult(command, newCallbackError(
+			command, ErrorKindOutput, "render command output", renderErr,
 		))
 	}
 	signal := newClassifiedError(kind, string(kind)+" requested", nil, false)
@@ -973,10 +1087,18 @@ func (application *Application) commandPath(commandID int) []string {
 }
 
 func contextError(ctx context.Context) error {
+	return contextErrorWithProtection(ctx, false)
+}
+
+func contextErrorForCommand(ctx context.Context, command *compiledCommand) error {
+	return contextErrorWithProtection(ctx, commandProtectsSecrets(command))
+}
+
+func contextErrorWithProtection(ctx context.Context, protectSecrets bool) error {
 	switch ctx.Err() {
 	case nil:
 	default:
-		return classifyContextError(contextErrorWithCause(ctx))
+		return classifyContextErrorWithProtection(contextErrorWithCause(ctx), protectSecrets)
 	}
 
 	return nil
@@ -991,11 +1113,25 @@ func contextErrorWithCause(ctx context.Context) error {
 }
 
 func classifyContextError(err error) error {
+	return classifyContextErrorWithProtection(err, false)
+}
+
+func classifyContextErrorForCommand(err error, command *compiledCommand) error {
+	return classifyContextErrorWithProtection(err, commandProtectsSecrets(command))
+}
+
+func classifyContextErrorWithProtection(err error, protectSecrets bool) error {
+	kind := ErrorKindCanceled
+	message := "execution canceled"
 	if errors.Is(err, context.DeadlineExceeded) {
-		return newClassifiedError(ErrorKindDeadline, "execution deadline exceeded", err, false)
+		kind = ErrorKindDeadline
+		message = "execution deadline exceeded"
+	}
+	if protectSecrets {
+		return newProtectedError(kind, message, err)
 	}
 
-	return newClassifiedError(ErrorKindCanceled, "execution canceled", err, false)
+	return newClassifiedError(kind, message, err, false)
 }
 
 func cloneDynamicValue(value any) any {

@@ -20,13 +20,27 @@ Error envelope:
 JSON contains no ANSI, animation, incidental logs, Go type names, stack traces,
 or secret values. Go's JSON encoder provides deterministic map-key ordering.
 Human diagnostics strip terminal controls and remain single-line. Structured
-success data is snapshotted when `SetData` is called.
+success data is snapshotted when `SetData` is called. The runtime walks and
+bounds both the live data graph and encoder-reachable type graph before
+serialization, including types behind nil containers and bounded struct names
+and tags. Invalid JSON tag names use the standard encoder's field-name fallback.
+Application-defined
+`json.Marshaler`, `encoding.TextMarshaler`, `fmt.Stringer`, `fmt.Formatter`,
+and `error` implementations are rejected because arbitrary in-process
+serializer callbacks cannot be resource-bounded. Fields tagged with
+`json:",omitzero"` also reject application-defined `IsZero` methods before the
+standard encoder can invoke them. `json.RawMessage` and the built-in scalar
+encodings remain supported; raw-message preflight accounts for the standard
+encoder's HTML and line-separator escape expansion and rejects a decisive
+raw-size overflow before scanning the message.
 
-Output records, encoded data, and completion responses are bounded. A writer
-error or short write becomes `ErrorKindOutput` and retains its cause. A render
-failure joins but does not erase a preceding command or cleanup failure. The
-default broken-pipe policy is therefore a non-zero output failure; applications
-may translate it at their executable boundary if their Unix pipeline contract
+Output records, encoded data, completion-provider candidate inspection,
+accepted completion results, and completion responses are bounded. A writer
+error or short write becomes `ErrorKindOutput` and retains its cause unless
+secret-aware protection withholds its concrete value. A render failure joins
+but does not erase a preceding command or cleanup failure. The default
+broken-pipe policy is therefore a non-zero output failure; applications may
+translate it at their executable boundary if their Unix pipeline contract
 requires silent success.
 
 The core emits no color today. `NoColor` is an explicit stable policy field for

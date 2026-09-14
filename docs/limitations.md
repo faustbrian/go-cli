@@ -29,6 +29,8 @@ lifecycle hooks, completion, or generated references must use `Command` and
 
 JSON and quiet modes isolate handler stdout and stderr, but the framework
 cannot redact human-mode application direct IO, logs, telemetry attributes,
-panic values, application globals, custom marshaler output, or secrets exposed
-by the operating system. Applications must honor binding metadata and the
-security guide at those boundaries.
+panic values, application globals, or secrets exposed by the operating system.
+Applications must honor binding metadata and the security guide at those
+boundaries. `Output.SetData` rejects custom serialization methods; applications
+that require them must serialize into a bounded built-in value before calling
+the framework.

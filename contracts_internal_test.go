@@ -167,19 +167,21 @@ func TestCompileOptionsAndMetadataBoundaries(t *testing.T) {
 		MaximumCommandDepth: 2, MaximumCommands: 3,
 		MaximumOptionsPerCommand: 4, MaximumArgumentsPerCommand: 5,
 		MaximumArguments: 6, MaximumArgvBytes: 7, MaximumMetadataBytes: 8,
-		MaximumCompletionResults: 9, MaximumCompletionBytes: 10,
+		MaximumCompletionProviderResults: 9,
+		MaximumCompletionResults:         10, MaximumCompletionBytes: 11,
 	}
 	configuration := compileConfiguration{limits: defaultLimits()}
 	if err := WithLimits(overrides)(&configuration); err != nil || configuration.limits != overrides {
 		t.Fatalf("limits = %#v, error = %v", configuration.limits, err)
 	}
-	for index := range 9 {
+	for index := range 10 {
 		invalid := overrides
 		fields := []*int{
 			&invalid.MaximumCommandDepth, &invalid.MaximumCommands,
 			&invalid.MaximumOptionsPerCommand, &invalid.MaximumArgumentsPerCommand,
 			&invalid.MaximumArguments, &invalid.MaximumArgvBytes,
 			&invalid.MaximumMetadataBytes,
+			&invalid.MaximumCompletionProviderResults,
 			&invalid.MaximumCompletionResults, &invalid.MaximumCompletionBytes,
 		}
 		*fields[index] = -1

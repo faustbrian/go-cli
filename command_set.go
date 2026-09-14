@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/faustbrian/go-cli/internal/engine"
+	"github.com/faustbrian/go-cli/v2/internal/engine"
 )
 
 // CommandSet declares a bounded root command with direct executable children.
@@ -155,37 +155,39 @@ func (application *CommandSetApplication) RunCommand(
 		))
 	}
 	if ctx == nil {
-		return application.withExitCode(finalize(
+		return application.withExitCode(finalizeUnselected(
 			streams,
 			request.Output,
-			nil,
+			application.root,
 			output,
 			newInternalError("run with a nil context", nil),
 		))
 	}
 	if request.Output.Mode > OutputQuiet {
-		return application.withExitCode(finalize(
+		return application.withExitCode(finalizeUnselected(
 			streams,
 			OutputPolicy{},
-			nil,
+			application.root,
 			output,
 			newInternalError("invalid output mode", nil),
 		))
 	}
-	if err := contextError(ctx); err != nil {
-		return application.withExitCode(finalize(
+	if err := contextErrorWithProtection(
+		ctx, commandTreeProtectsSecrets(application.root),
+	); err != nil {
+		return application.withExitCode(finalizeUnselected(
 			streams,
 			request.Output,
-			nil,
+			application.root,
 			output,
 			err,
 		))
 	}
 	if err := validateArgv(request.Args, application.limits); err != nil {
-		return application.withExitCode(finalize(
+		return application.withExitCode(finalizeUnselected(
 			streams,
 			request.Output,
-			nil,
+			application.root,
 			output,
 			err,
 		))
@@ -209,11 +211,15 @@ func (application *CommandSetApplication) runParsed(
 ) Result {
 	parsed, err := engine.Parse(ctx, engineCommand(application.root), request.Args)
 	if err != nil {
-		if contextErr := contextError(ctx); contextErr != nil {
-			return finalize(streams, request.Output, nil, output, contextErr)
+		if contextErr := contextErrorWithProtection(
+			ctx, commandTreeProtectsSecrets(application.root),
+		); contextErr != nil {
+			return finalizeUnselected(
+				streams, request.Output, application.root, output, contextErr,
+			)
 		}
 
-		return finalize(streams, request.Output, nil, output, newClassifiedError(
+		return finalizeUnselected(streams, request.Output, application.root, output, newClassifiedError(
 			classifyParseFailure(err),
 			"invalid command invocation",
 			err,
@@ -460,7 +466,7 @@ func executeCommandSetHandler(
 	command *compiledCommand,
 	input Input,
 ) Result {
-	if err := contextError(ctx); err != nil {
+	if err := contextErrorForCommand(ctx, command); err != nil {
 		return finalize(streams, request.Output, command, output, err)
 	}
 	invocation := Invocation{
@@ -476,11 +482,11 @@ func executeCommandSetHandler(
 				request.Output,
 				command,
 				output,
-				classifyPhaseError(ctx, "command execution failed", err),
+				classifyPhaseError(ctx, command, "command execution failed", err),
 			)
 		}
 	}
-	if err := contextError(ctx); err != nil {
+	if err := contextErrorForCommand(ctx, command); err != nil {
 		return finalize(streams, request.Output, command, output, err)
 	}
 

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	cli "github.com/faustbrian/go-cli"
+	cli "github.com/faustbrian/go-cli/v2"
 )
 
 func TestHumanOutputSeparatesSuccessAndErrors(t *testing.T) {
@@ -262,6 +262,107 @@ func TestOutputLimitsAreCumulativeAndRemainClassified(t *testing.T) {
 	if !errors.As(result.Err, &classified) || classified.Kind() != cli.ErrorKindOutput {
 		t.Fatalf("record-limit error = %v, want output classification", result.Err)
 	}
+}
+
+func TestSetDataRejectsCustomSerializationBeforeCallingIt(t *testing.T) {
+	t.Parallel()
+
+	marshaled := false
+	stringified := false
+	application, err := cli.Compile(cli.NewCommand(
+		"tool",
+		cli.WithHandler(func(_ context.Context, invocation cli.Invocation) error {
+			return invocation.Output().SetData(customOutputValue{
+				marshaled:   &marshaled,
+				stringified: &stringified,
+			})
+		}),
+	))
+	if err != nil {
+		t.Fatalf("Compile() error = %v", err)
+	}
+
+	result := application.Run(context.Background(), cli.Request{})
+	if !errors.Is(result.Err, cli.ErrOutput) {
+		t.Fatalf("Run() error = %v, want output classification", result.Err)
+	}
+	if marshaled || stringified {
+		t.Fatalf("custom serializers called = (JSON %t, human %t), want neither", marshaled, stringified)
+	}
+}
+
+func TestSetDataRejectsOmitZeroCallbacksBeforeCallingThem(t *testing.T) {
+	t.Parallel()
+
+	for name, makeValue := range map[string]func(*bool) any{
+		"value method": func(called *bool) any {
+			return struct {
+				Value customZeroValue `json:",omitzero"`
+			}{Value: customZeroValue{called: called}}
+		},
+		"pointer field": func(called *bool) any {
+			return struct {
+				Value *customZeroValue `json:",omitzero"`
+			}{Value: &customZeroValue{called: called}}
+		},
+		"pointer method": func(called *bool) any {
+			return struct {
+				Value customPointerZeroValue `json:",omitzero"`
+			}{Value: customPointerZeroValue{called: called}}
+		},
+		"interface field": func(called *bool) any {
+			return struct {
+				Value customZero `json:",omitzero"`
+			}{Value: customZeroValue{called: called}}
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			called := false
+			if err := (&cli.Output{}).SetData(makeValue(&called)); !errors.Is(err, cli.ErrOutput) {
+				t.Fatalf("SetData() error = %v, want output classification", err)
+			}
+			if called {
+				t.Fatal("SetData() invoked application IsZero callback")
+			}
+		})
+	}
+}
+
+type customOutputValue struct {
+	marshaled   *bool
+	stringified *bool
+}
+
+type customZero interface {
+	IsZero() bool
+}
+
+type customZeroValue struct{ called *bool }
+
+func (value customZeroValue) IsZero() bool {
+	*value.called = true
+
+	return true
+}
+
+type customPointerZeroValue struct{ called *bool }
+
+func (value *customPointerZeroValue) IsZero() bool {
+	*value.called = true
+
+	return true
+}
+
+func (value customOutputValue) MarshalJSON() ([]byte, error) {
+	*value.marshaled = true
+	return []byte(`"custom"`), nil
+}
+
+func (value customOutputValue) String() string {
+	*value.stringified = true
+	return "custom"
 }
 
 type failingWriter struct{ err error }
