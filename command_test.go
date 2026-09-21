@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	cli "github.com/faustbrian/go-cli/v2"
+	cli "github.com/faustbrian/go-cli"
 )
 
 func TestNewCommandIgnoresNilOptions(t *testing.T) {

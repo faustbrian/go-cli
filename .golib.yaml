@@ -16,7 +16,7 @@ api:
   baselines:
   - module: "."
     mode: apidiff
-    path: api/v2.txt
+    path: api/baseline.txt
 runtimes:
   zsh: "5.9"
 operations:

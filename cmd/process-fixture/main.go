@@ -10,7 +10,7 @@ import (
 	"sync"
 	"syscall"
 
-	cli "github.com/faustbrian/go-cli/v2"
+	cli "github.com/faustbrian/go-cli"
 )
 
 func main() {

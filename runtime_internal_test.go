@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/faustbrian/go-cli/v2/internal/engine"
+	"github.com/faustbrian/go-cli/internal/engine"
 )
 
 func TestErrorAndExitContractsCoverNilAndEveryClassification(t *testing.T) {

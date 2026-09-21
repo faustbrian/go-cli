@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	cli "github.com/faustbrian/go-cli/v2"
+	cli "github.com/faustbrian/go-cli"
 )
 
 func TestCompileBoundsCommandTreeDepthAndBreadth(t *testing.T) {

@@ -1,13 +1,13 @@
 # Threat model
 
-Version: `CLI-TM-2.0`
+Version: `CLI-TM-1.1`
 
 Owner: go-cli maintainers
 
 ## Scope and assets
 
-This model covers the planned, unpublished v2 source line. The owned boundary
-is command construction, argv parsing, typed input,
+This model covers the supported v1 source line. The owned boundary is command
+construction, argv parsing, typed input,
 lifecycle dispatch, buffered output, completion, generated references, and
 stable errors. Assets are secret-marked input values, terminal and JSON output
 integrity, bounded process memory and CPU, lifecycle ordering, cancellation,
@@ -73,9 +73,8 @@ ownership and application-facing mitigations; `CLI-R5` is accepted Low risk.
 
 ## Compatibility and release disposition
 
-The stable published line remains v1.0.1. Rejecting custom structured-output
+The stable published line remains v1. Rejecting custom structured-output
 serializers and withholding concrete secret-command callback causes are
-intentional public behavior changes isolated behind the `/v2` module path.
-This v2 source is planned and non-releasable until its API baseline, direct
-owned consumers, security gates, and publication evidence are complete. The
-repository contains no local replacement directive.
+intentional security corrections on that supported line. Release requires the
+updated API baseline, direct owned-consumer checks, security gates, and
+publication evidence. The repository contains no local replacement directive.

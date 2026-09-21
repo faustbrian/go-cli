@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"testing"
 
-	cli "github.com/faustbrian/go-cli/v2"
+	cli "github.com/faustbrian/go-cli"
 )
 
 func BenchmarkCompileSmallTree(b *testing.B) {
