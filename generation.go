@@ -6,7 +6,7 @@ import (
 	"html"
 	"strings"
 
-	"github.com/faustbrian/go-cli/v2/internal/engine"
+	"github.com/faustbrian/go-cli/internal/engine"
 )
 
 // HelpOptions controls plain-text help rendering.

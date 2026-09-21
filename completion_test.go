@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"testing"
 
-	cli "github.com/faustbrian/go-cli/v2"
+	cli "github.com/faustbrian/go-cli"
 )
 
 func TestCompletionCombinesStaticAndExplicitDynamicCandidates(t *testing.T) {

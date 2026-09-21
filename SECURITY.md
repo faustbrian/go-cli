@@ -8,7 +8,6 @@ or secret-bearing argv.
 | Version | Supported |
 | --- | --- |
 | 1.x | Yes |
-| 2.x | No; planned and unpublished |
 | < 1.0 | No |
 
 Security fixes are applied to the current v1 line and released from a supported

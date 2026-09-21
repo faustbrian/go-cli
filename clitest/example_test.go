@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	cli "github.com/faustbrian/go-cli/v2"
-	"github.com/faustbrian/go-cli/v2/clitest"
+	cli "github.com/faustbrian/go-cli"
+	"github.com/faustbrian/go-cli/clitest"
 )
 
 func TestExampleRun(t *testing.T) {

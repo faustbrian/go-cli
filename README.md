@@ -25,10 +25,10 @@ For ecosystem-wide package selection, construction, ownership, and lifecycle
 guidance, see the versioned [Golib ecosystem index](https://github.com/faustbrian/go-library-tools/blob/v1.4.0/docs/ecosystem/README.md)
 and its [Tooling family guidance](https://github.com/faustbrian/go-library-tools/blob/v1.4.0/docs/ecosystem/design-language.md#package-families-and-selection).
 
-The latest published module is stable v1.0.1. This source tree prepares the
-planned, unpublished `github.com/faustbrian/go-cli/v2` security boundary and is
-not releasable until the v2 publication and consumer-migration gates pass. Both
-lines require Go 1.27.0 or newer; existing consumers should remain on v1.
+The root module is stable at v1, follows Semantic Versioning, and requires Go
+1.27.0 or newer. Releases use root `vX.Y.Z` tags. Security corrections remain
+on the supported v1 line and are documented with migration guidance when they
+tighten hostile-input behavior.
 
 ## Install
 

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	cli "github.com/faustbrian/go-cli/v2"
+	cli "github.com/faustbrian/go-cli"
 )
 
 func TestTypedArgumentsConvertBeforeHandlerExecution(t *testing.T) {

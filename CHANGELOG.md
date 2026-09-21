@@ -7,8 +7,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
-This source prepares an unpublished, non-releasable v2 module. Existing v1
-consumers remain on v1.0.1 until the v2 publication gates pass.
+## [1.1.0] - 2026-09-21
 
 ### Security
 
@@ -269,6 +268,7 @@ consumers remain on v1.0.1 until the v2 publication gates pass.
 - Established a 100% mutation-efficacy and 98.5% mutator-coverage release gate
   with explicit reviewed classifications for unexecuted constant mutations.
 
-[Unreleased]: https://github.com/faustbrian/go-cli/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/faustbrian/go-cli/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/faustbrian/go-cli/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/faustbrian/go-cli/releases/tag/v1.0.1
 [1.0.0]: https://github.com/faustbrian/go-cli/releases/tag/v1.0.0

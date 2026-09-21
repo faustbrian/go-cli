@@ -6,7 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	cli "github.com/faustbrian/go-cli/v2"
+	cli "github.com/faustbrian/go-cli"
 )
 
 func TestShutdownControllerSupportsGracefulThenForcedPolicy(t *testing.T) {

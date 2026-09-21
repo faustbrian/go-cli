@@ -11,7 +11,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/faustbrian/go-cli/v2/internal/engine"
+	"github.com/faustbrian/go-cli/internal/engine"
 )
 
 const defaultCleanupTimeout = 30 * time.Second

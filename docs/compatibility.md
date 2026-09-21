@@ -24,9 +24,9 @@ Removal waits for a breaking release unless the behavior is unsafe. Security
 corrections may deliberately tighten hostile-input acceptance and will be
 documented with migration guidance.
 
-## Unreleased API transition
+## Security compatibility
 
-The planned `github.com/faustbrian/go-cli/v2` line rejects application-defined
+The supported v1 line rejects application-defined
 structured-output serializers and `json:",omitzero"` `IsZero` callbacks whose
 execution or allocation cannot be bounded. It also rejects encoder-reachable
 type graphs or struct metadata that exceed the documented output boundary.
@@ -34,8 +34,7 @@ It also withholds concrete callback causes from `errors.As` when the selected
 command declares any secret binding, while retaining `errors.Is` identity;
 preselection cancellation and render failures use the same protection when any
 compiled command accepts secrets. Direct completion also retains protected
-cancellation-cause identity. These changes intentionally tighten released v1
-behavior and therefore remain isolated behind the unpublished v2 module path.
-Existing consumers must stay on v1.0.1 until v2 is published, then replace
-custom `Output.SetData` values with bounded built-in values and avoid relying
-on concrete callback-cause recovery for commands that accept secrets.
+cancellation-cause identity. These security corrections intentionally tighten
+hostile-input behavior on the supported v1 line. Consumers must replace custom
+`Output.SetData` values with bounded built-in values and avoid relying on
+concrete callback-cause recovery for commands that accept secrets.
