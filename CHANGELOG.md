@@ -56,7 +56,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Documentation
 
-- Publish the stable-v1, Go 1.26.6, root-tag, package-selection, support, and
+- Publish the stable-v1, Go 1.27.0, root-tag, package-selection, support, and
   security contract with a linked executable `clitest` example.
 - Correct standalone release guidance and source-archive construction for the
   root module.
