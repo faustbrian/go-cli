@@ -22,7 +22,7 @@ discovery, global registration, configuration loading, prompts, logging, or
 telemetry exporters.
 
 For ecosystem-wide package selection, construction, ownership, and lifecycle
-guidance, see the versioned [Golib ecosystem index](https://github.com/faustbrian/go-library-tools/blob/v1.4.0/docs/ecosystem/README.md)
+guidance, see the versioned [Golib ecosystem index](https://github.com/faustbrian/go-library-tools/tree/531e4db50fd81a7201257a7b488a0cf22d333aca/docs/ecosystem)
 and its [Tooling family guidance](https://github.com/faustbrian/go-library-tools/blob/v1.4.0/docs/ecosystem/design-language.md#package-families-and-selection).
 
 The root module is stable at v1, follows Semantic Versioning, and requires Go
