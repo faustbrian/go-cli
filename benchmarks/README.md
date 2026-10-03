@@ -121,7 +121,7 @@ requirements of the application being built.
 - [Benchmark source](compare_test.go)
 - [Parser differential evidence](parser_differential_test.go)
 - [CLI performance guidance](../docs/performance.md)
-- [Current equivalent-contract evidence](../docs/benchmarks/2026-09-05-darwin-arm64.md)
+- [Historical equivalent-contract evidence](../docs/benchmarks/2026-09-05-darwin-arm64.md)
 - [CLI documentation index](../docs/README.md)
 - [Contribution guide](../CONTRIBUTING.md)
 - [Security policy](../SECURITY.md)
