@@ -64,7 +64,7 @@ interpreting cross-library numbers. A materially safer or better-maintained
 engine, or a proven regression at the adapter boundary, can reopen the parser
 decision.
 
-Current equivalent-contract evidence:
+Historical equivalent-contract evidence:
 [2026-09-05 Darwin arm64](benchmarks/2026-09-05-darwin-arm64.md).
 
 Historical non-equivalent evidence:

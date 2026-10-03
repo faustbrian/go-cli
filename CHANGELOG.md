@@ -7,6 +7,19 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-10-03
+
+### Changed
+
+- Refresh the internal benchmark harness dependencies and immutable competitor
+  source pins, including urfave/cli v3.13.0 and Kong v1.16.1, while preserving
+  the published CLI API and behavior.
+
+### Documentation
+
+- Identify the retained September benchmark comparison as historical evidence
+  rather than a measurement of the updated dependency set.
+
 ## [1.1.0] - 2026-09-22
 
 ### Security
@@ -268,7 +281,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Established a 100% mutation-efficacy and 98.5% mutator-coverage release gate
   with explicit reviewed classifications for unexecuted constant mutations.
 
-[Unreleased]: https://github.com/faustbrian/go-cli/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/faustbrian/go-cli/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/faustbrian/go-cli/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/faustbrian/go-cli/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/faustbrian/go-cli/releases/tag/v1.0.1
 [1.0.0]: https://github.com/faustbrian/go-cli/releases/tag/v1.0.0
