@@ -7,6 +7,15 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-10-07
+
+### Changed
+
+- Refresh the distributed development TOML parser lock to smol-toml v1.9.0.
+  The shared spelling tool retains its separately embedded dependency lock.
+- Update the internal benchmark harness to urfave/cli v3.14.0 and the published
+  go-cli v1.1.1, preserving the public CLI API and behavior.
+
 ## [1.1.1] - 2026-10-03
 
 ### Changed
@@ -281,7 +290,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Established a 100% mutation-efficacy and 98.5% mutator-coverage release gate
   with explicit reviewed classifications for unexecuted constant mutations.
 
-[Unreleased]: https://github.com/faustbrian/go-cli/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/faustbrian/go-cli/compare/v1.1.2...HEAD
+[1.1.2]: https://github.com/faustbrian/go-cli/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/faustbrian/go-cli/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/faustbrian/go-cli/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/faustbrian/go-cli/releases/tag/v1.0.1
