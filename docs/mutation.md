@@ -1,7 +1,10 @@
 # Mutation testing
 
-`make mutation` delegates to the canonical repository runner. The gate requires
-exact 100% efficacy and mutator coverage: every viable production mutant must
+`golib mutation --module .` delegates to the canonical repository runner.
+This is full/release qualification, not an ordinary local or pull-request
+prerequisite. Optional `golib mutation --module . --package .` confines local
+work to the root package, one worker and a twenty-minute deadline. The full
+gate requires exact 100% efficacy and mutator coverage: every viable production mutant must
 be discovered, executed, and killed.
 
 The test-support package, checked-in reference application, and reference

@@ -2,8 +2,8 @@
 
 ## Before Editing
 
-1. Read [`AGENTS.md`](AGENTS.md) and the affected module's goals and docs.
-2. Run `make inventory` and the narrow baseline gate for the module.
+1. Read [`AGENTS.md`](AGENTS.md) and the affected package's docs.
+2. Run the affected package's deterministic tests as described below.
 3. Identify owned dependencies and reverse dependants in `modules.json`.
 4. Preserve unrelated work and generated/corpus provenance.
 
@@ -24,7 +24,8 @@ the affected stable decision entries, and complete the Specification Decisions
 section of the pull request template. An unresolved interpretation or stale
 source pin is release-blocking; peer behavior cannot silently select policy.
 
-Required mutation gates must finish with zero surviving viable mutants.
+Selected full/release mutation gates must finish with zero surviving viable
+mutants; mutation is not an ordinary local or pull-request prerequisite.
 
 Do not add package-local workflows, permanent replacements, machine-specific
 paths, bypass flags, broad mutation exclusions, or aggregate quality metrics
@@ -32,27 +33,73 @@ that hide a failing package.
 
 ## Verification
 
-Run during development:
+Use Go 1.27.2 for verification; the module/API minimum remains Go 1.27.0.
+An isolated checkout needs no sibling repositories or coordination goal files.
+Begin with deterministic tests and one active target when its argv boundary
+changes, using a disposable cache for each bounded session:
+
+```bash
+(
+  set -eu
+  GOCACHE="$(mktemp -d)"
+  export GOCACHE
+  trap 'rm -rf "${GOCACHE}"' EXIT
+  GOWORK=off go test ./...
+  GOWORK=off go test . -run '^$' -fuzz '^FuzzRunArgv$' -fuzztime=2s -timeout=2m
+)
+```
+
+The deterministic command executes fuzz seeds/corpus, not active fuzzing.
+Install the verified public v2.1.1 binary archive for your platform from
+[go-library-tools releases](https://github.com/faustbrian/go-library-tools/releases/tag/v2.1.1),
+checking `checksums.txt` against `.golib.yaml` and the archive against that
+checksum set. Add the extracted `golib` binary to `PATH`, or set `GOLIB` to
+its path; do not build Tools from source. CI installs and verifies that public
+release while checking out its pinned reusable workflow source.
 
 ```bash
 make inventory
 make check
+make ci
+make specification-check
+golib mutation --module . --package .
 ```
 
-Before submitting a repository-wide change:
+Run adjacent Make commands in one disposable-cache session as shown above.
+`make check` and `make ci` run the bounded local contract without service or
+test-tag prerequisites in either the root or declared benchmark module. CI
+also validates repository/cohesion structure and offline specification
+authority. The root race runs once with a two-minute timeout and checks
+concurrent repeated signals force shutdown, graceful close releases its
+context, and late signals do not reopen its lifecycle. Base-free checks run
+seeds/corpus; changed-source CI selects causal active fuzz smoke. Optional
+mutation is limited to one package, one worker and a twenty-minute deadline.
+
+Select full qualification, generated documentation and release rehearsal
+explicitly:
 
 ```bash
-make ci
+make check-full
+make -f verification/package.mk docs
+make -f verification/package.mk benchmark
+make specification-check-online
+golib api check
+golib release dry-run --module .
 ```
 
-The full scheduled and release gate is `make ci`. Report every unavailable or
-failing command; do not describe partial results as release-ready.
+Full checks retain all nine declared fuzz targets at 2s/2m each (including
+`internal/engine`), the repeated concurrency/completion suite, nested
+benchmarks and all original module gates. Generated-documentation checking
+runs the reference generator, detects drift, checks Bash and pinned Zsh 5.9
+completion syntax and rejects shell evaluation; its release-source guard is
+unchanged. Online specification checking fetches authority/errata sources when
+applicable. Release rehearsal can run locally. Report unavailable or failing
+commands; bounded checks alone do not establish release qualification.
 
 ## Shared Tooling
 
-Local verification uses the released `golib` v1.0.4 binary declared in
-`.golib.yaml`. Put that binary on `PATH`, or set `GOLIB` to its path, before
-running the repository checks. The repository-owned `verification/package.mk`
+Local verification uses the public `golib` release and checksum declared in
+`.golib.yaml`. The repository-owned `verification/package.mk`
 contains only the nested benchmark and generated-documentation checks that
 cannot be represented by the shared tool's direct operations.
 

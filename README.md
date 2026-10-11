@@ -3,7 +3,7 @@
 [![CI](https://github.com/faustbrian/go-cli/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/faustbrian/go-cli/actions/workflows/ci.yml)
 [![CodeQL](https://img.shields.io/badge/CodeQL-required-blue)](https://github.com/faustbrian/go-cli/actions/workflows/ci.yml)
 [![Coverage](https://img.shields.io/badge/coverage-100%25_required-blue)](CONTRIBUTING.md#verification)
-[![Mutation](https://img.shields.io/badge/mutation-100%25_required-blue)](CONTRIBUTING.md#verification)
+[![Mutation](https://img.shields.io/badge/mutation-full%2Frelease-blue)](CONTRIBUTING.md#verification)
 [![Documentation](https://img.shields.io/badge/docs-checked_in_CI-blue)](docs/)
 [![Go Reference](https://pkg.go.dev/badge/github.com/faustbrian/go-cli.svg)](https://pkg.go.dev/github.com/faustbrian/go-cli)
 [![Release](https://img.shields.io/github/v/release/faustbrian/go-cli?sort=semver)](https://github.com/faustbrian/go-cli/releases)
@@ -148,6 +148,17 @@ completion are generated as data without editing shell configuration. See
 The `clitest` harness runs commands without mutating process-global state. See
 the [executable harness example](clitest/example_test.go) and
 [commands](docs/commands.md).
+
+## Development
+
+`make check` and `make ci` use the published tool pinned in `.golib.yaml` for
+bounded verification, including a targeted concurrent-shutdown/graceful-close
+race. No services or test tags are declared. Base-free checks run fuzz seeds;
+changed-source CI selects active smoke. `make check-full` retains all explicit
+campaigns, reference generation and shell-completion checks. See
+[contributor verification](CONTRIBUTING.md#verification) for isolated tests,
+tool installation and release rehearsal. The producer is Go 1.27.2; module
+and API minima remain Go 1.27.0.
 
 ## Documentation
 
