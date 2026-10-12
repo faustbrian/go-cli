@@ -1,3 +1,8 @@
+// Package benchmarks contains test-only pinned framework comparison and former
+// Cobra-adapter parser fixtures. Run in the declared nested module/workspace.
+// Equivalent runners model selected JSON/validation/typed-input/writer contracts,
+// not every framework capability or live terminal/service performance. External
+// comparison dependencies do not enter the public cli module.
 package benchmarks
 
 import (
@@ -69,6 +74,8 @@ func comparisonResultForTarget(target string, force bool) comparisonResult {
 	return comparisonResult{Target: target, Force: force}
 }
 
+// comparisonOutput models the selected output bounds and snapshot/writer contract
+// for competitors; it is not a replacement for cli’s full hostile type validation.
 type comparisonOutput struct {
 	mu        sync.Mutex
 	dataJSON  json.RawMessage
@@ -398,6 +405,8 @@ func TestEquivalentBenchmarkRunnersShareStructuralFailure(t *testing.T) {
 	}
 }
 
+// BenchmarkEquivalentColdInvocation includes fresh framework construction plus one fixed deploy
+// request, typed validation and bounded JSON/discarded IO inside b.Loop.
 func BenchmarkEquivalentColdInvocation(b *testing.B) {
 	for _, benchmarkCase := range equivalentComparisonCases() {
 		b.Run(benchmarkCase.name, func(b *testing.B) {
@@ -419,6 +428,8 @@ func BenchmarkEquivalentColdInvocation(b *testing.B) {
 	}
 }
 
+// BenchmarkEquivalentRepeatedInvocation reuses a runner after excluded construction
+// and exercises the same fixed successful request; competitors reset invocation state.
 func BenchmarkEquivalentRepeatedInvocation(b *testing.B) {
 	for _, benchmarkCase := range equivalentComparisonCases() {
 		b.Run(benchmarkCase.name, func(b *testing.B) {
@@ -605,6 +616,8 @@ func newKongComparison() (*comparisonApplication, error) {
 	}, nil
 }
 
+// BenchmarkParsingFloorFlag measures only a reused stdlib flag parser with explicit state
+// reset and fixed force/target checks; it is not the full framework output/lifecycle contract.
 func BenchmarkParsingFloorFlag(b *testing.B) {
 	flags, force := newFlagParser()
 	b.ReportAllocs()

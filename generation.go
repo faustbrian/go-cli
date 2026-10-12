@@ -11,6 +11,7 @@ import (
 
 // HelpOptions controls plain-text help rendering.
 type HelpOptions struct {
+	// Width wraps by rune count when positive; zero/negative leaves help unwrapped, without terminal probing.
 	Width int
 }
 
@@ -30,59 +31,101 @@ const (
 
 // Manifest is the stable machine-readable command model.
 type Manifest struct {
-	Schema   string            `json:"schema"`
-	Name     string            `json:"name"`
-	Version  string            `json:"version,omitempty"`
-	Root     ManifestCommand   `json:"root"`
+	// Schema identifies go-cli/manifest/v1 in generated JSON.
+	Schema string `json:"schema"`
+	// Name is the canonical root token, without shell interpolation.
+	Name string `json:"name"`
+	// Version is optional declared root version metadata.
+	Version string `json:"version,omitempty"`
+	// Root contains root contract metadata; descendants are carried separately in Commands.
+	Root ManifestCommand `json:"root"`
+	// Commands contains ordered direct children and their full descendant trees, including hidden entries.
 	Commands []ManifestCommand `json:"commands,omitempty"`
 }
 
 // ManifestCommand describes one command and its descendants.
 type ManifestCommand struct {
-	Name             string             `json:"name"`
-	Path             string             `json:"path"`
-	Aliases          []string           `json:"aliases,omitempty"`
-	Summary          string             `json:"summary,omitempty"`
-	Description      string             `json:"description,omitempty"`
-	Examples         []string           `json:"examples,omitempty"`
-	Documentation    string             `json:"documentation,omitempty"`
-	Hidden           bool               `json:"hidden,omitempty"`
-	Experimental     bool               `json:"experimental,omitempty"`
-	Deprecated       string             `json:"deprecated,omitempty"`
-	Replacement      string             `json:"replacement,omitempty"`
-	Arguments        []ManifestArgument `json:"arguments,omitempty"`
-	Options          []ManifestOption   `json:"options,omitempty"`
-	InheritedOptions []ManifestOption   `json:"inherited_options,omitempty"`
-	Commands         []ManifestCommand  `json:"commands,omitempty"`
+	// Name is the canonical token, not an alias.
+	Name string `json:"name"`
+	// Path is root-inclusive canonical tokens joined with spaces.
+	Path string `json:"path"`
+	// Aliases contains declared alternate tokens in registration order.
+	Aliases []string `json:"aliases,omitempty"`
+	// Summary is copied declared one-line metadata, not invocation output.
+	Summary string `json:"summary,omitempty"`
+	// Description is copied declared long metadata; JSON does not terminal-sanitize it.
+	Description string `json:"description,omitempty"`
+	// Examples contains copied declared examples, not executed commands.
+	Examples []string `json:"examples,omitempty"`
+	// Documentation is a declared link string, not fetched or trust-validated.
+	Documentation string `json:"documentation,omitempty"`
+	// Hidden marks discovery exclusion; manifest/reference retain the command.
+	Hidden bool `json:"hidden,omitempty"`
+	// Experimental is declared compatibility status, not a runtime gate.
+	Experimental bool `json:"experimental,omitempty"`
+	// Deprecated is an optional command metadata message, not Go declaration deprecation.
+	Deprecated string `json:"deprecated,omitempty"`
+	// Replacement is the declared replacement path; generation does not resolve it.
+	Replacement string `json:"replacement,omitempty"`
+	// Arguments describes local positional contracts in parse order.
+	Arguments []ManifestArgument `json:"arguments,omitempty"`
+	// Options describes local named contracts in registration order.
+	Options []ManifestOption `json:"options,omitempty"`
+	// InheritedOptions describes effective ancestor options with provenance.
+	InheritedOptions []ManifestOption `json:"inherited_options,omitempty"`
+	// Commands contains ordered children, including hidden ones.
+	Commands []ManifestCommand `json:"commands,omitempty"`
 }
 
 // ManifestArgument describes a positional argument.
 type ManifestArgument struct {
-	Name          string              `json:"name"`
-	Type          string              `json:"type"`
-	Cardinality   ArgumentCardinality `json:"cardinality"`
-	Description   string              `json:"description,omitempty"`
-	Secret        bool                `json:"secret,omitempty"`
-	AllowedValues []string            `json:"allowed_values,omitempty"`
-	Format        string              `json:"format,omitempty"`
+	// Name is the declared positional name.
+	Name string `json:"name"`
+	// Type is the stable declared value-type label, not a Go type name.
+	Type string `json:"type"`
+	// Cardinality selects required/optional/repeated/remainder positional resolution.
+	Cardinality ArgumentCardinality `json:"cardinality"`
+	// Description is copied metadata, not a value or conversion diagnostic.
+	Description string `json:"description,omitempty"`
+	// Secret marks protected values; declaration metadata itself remains application-owned.
+	Secret bool `json:"secret,omitempty"`
+	// AllowedValues is a copied enum set, omitted for secret bindings.
+	AllowedValues []string `json:"allowed_values,omitempty"`
+	// Format is the declared time layout, not an invocation timestamp.
+	Format string `json:"format,omitempty"`
 }
 
 // ManifestOption describes a local or inherited option.
 type ManifestOption struct {
-	Name          string   `json:"name"`
-	Short         string   `json:"short,omitempty"`
-	Type          string   `json:"type"`
-	Description   string   `json:"description,omitempty"`
-	Persistent    bool     `json:"persistent,omitempty"`
-	Secret        bool     `json:"secret,omitempty"`
-	Defaulted     bool     `json:"defaulted,omitempty"`
-	Required      bool     `json:"required,omitempty"`
-	Source        string   `json:"source,omitempty"`
+	// Name is the declared long name without leading dashes.
+	Name string `json:"name"`
+	// Short is the shorthand string, empty when none is declared.
+	Short string `json:"short,omitempty"`
+	// Type is the stable declared value-type label.
+	Type string `json:"type"`
+	// Description is copied declaration metadata, not an invocation value.
+	Description string `json:"description,omitempty"`
+	// Persistent marks availability on descendants of its declaration.
+	Persistent bool `json:"persistent,omitempty"`
+	// Secret marks protected values; direct application output is not automatically redacted.
+	Secret bool `json:"secret,omitempty"`
+	// Defaulted reports that a default is declared, never the default value itself.
+	Defaulted bool `json:"defaulted,omitempty"`
+	// Required reports the presence constraint; a default can satisfy it.
+	Required bool `json:"required,omitempty"`
+	// Source is the canonical command path that declared this option.
+	Source string `json:"source,omitempty"`
+	// AllowedValues is copied enum metadata, omitted for secret bindings.
 	AllowedValues []string `json:"allowed_values,omitempty"`
-	Format        string   `json:"format,omitempty"`
+	// Format is a declared time layout, if applicable.
+	Format string `json:"format,omitempty"`
 }
 
-// Help renders deterministic plain-text help for a canonical or alias path.
+// Help renders plain-text metadata for root (empty path) or nested tokens
+// excluding root. Aliases resolve to canonical paths; hidden children are omitted
+// from discovery but can be explicitly addressed. Width is rune-based wrapping,
+// not display-cell/terminal measurement. Nil/zero application fails internally;
+// unknown paths match ErrUsage. No callback or IO runs.
 func (application *Application) Help(path []string, options HelpOptions) (string, error) {
 	command, canonical, err := application.findCommand(path)
 	if err != nil {
@@ -214,7 +257,11 @@ func wrapHelpLine(line string, width int) []string {
 	return append(result, remaining)
 }
 
-// ManifestJSON returns an indented deterministic machine manifest.
+// ManifestJSON returns fresh indented go-cli/manifest/v1 bytes with one final
+// newline. Hidden commands remain included; secret enum sets and all invocation
+// and default values are absent. Callbacks are not run. Declared description/example
+// strings are JSON-encoded, not terminal-sanitized or fetched. Nil/zero application
+// returns an internal error; modifying returned bytes does not mutate metadata.
 func (application *Application) ManifestJSON() ([]byte, error) {
 	if application == nil || application.root == nil {
 		return nil, newInternalError("generate manifest from a nil application", nil)
@@ -225,7 +272,10 @@ func (application *Application) ManifestJSON() ([]byte, error) {
 	return append(encoded, '\n'), nil
 }
 
-// Markdown returns a deterministic command reference.
+// Markdown returns a deterministic, terminal-control-filtered reference with
+// hidden commands retained, secret enum values omitted and one trailing newline.
+// Metadata is escaped for text/code rendering; documentation links are not fetched.
+// Nil/zero application returns an internal error; no command callback executes.
 func (application *Application) Markdown() (string, error) {
 	if application == nil || application.root == nil {
 		return "", newInternalError("generate Markdown from a nil application", nil)
@@ -237,7 +287,11 @@ func (application *Application) Markdown() (string, error) {
 	return strings.TrimRight(output.String(), "\n") + "\n", nil
 }
 
-// Completion returns a deterministic completion script without side effects.
+// Completion returns quoted script data for supported Shell values, without
+// executing handlers/providers, invoking a shell or modifying configuration.
+// Generated scripts later invoke the executable’s hidden completion boundary
+// with token arrays, never an evaluated reconstructed command string. Unsupported
+// targets match ErrUsage; nil/zero applications fail internally.
 func (application *Application) Completion(shell Shell) (string, error) {
 	if application == nil || application.root == nil {
 		return "", newInternalError("generate completion from a nil application", nil)

@@ -10,6 +10,8 @@ import (
 	cli "github.com/faustbrian/go-cli"
 )
 
+// BenchmarkCompileSmallTree builds and compiles four children with three ordinary options
+// per child inside b.Loop, so construction is part of the measured operation.
 func BenchmarkCompileSmallTree(b *testing.B) {
 	for b.Loop() {
 		_, err := cli.Compile(benchmarkTree(4, 3))
@@ -19,6 +21,8 @@ func BenchmarkCompileSmallTree(b *testing.B) {
 	}
 }
 
+// BenchmarkCompileLargeTree includes construction and compilation of 64 direct children
+// with 12 ordinary options each; it is not reused-invocation latency.
 func BenchmarkCompileLargeTree(b *testing.B) {
 	for b.Loop() {
 		_, err := cli.Compile(benchmarkTree(64, 12))
@@ -28,6 +32,8 @@ func BenchmarkCompileLargeTree(b *testing.B) {
 	}
 }
 
+// BenchmarkCompileShapes includes construction/compilation of explicit broad, deep
+// and default-command-count boundary trees, not equivalent-shape rankings.
 func BenchmarkCompileShapes(b *testing.B) {
 	b.Run("broad", func(b *testing.B) {
 		for b.Loop() {
@@ -52,6 +58,8 @@ func BenchmarkCompileShapes(b *testing.B) {
 	})
 }
 
+// BenchmarkDispatch uses a precompiled 16-child/eight-option tree and a final-child
+// integer/positional argv with discarded IO; b.Loop excludes construction.
 func BenchmarkDispatch(b *testing.B) {
 	application, err := cli.Compile(benchmarkTree(16, 8))
 	if err != nil {
@@ -69,6 +77,8 @@ func BenchmarkDispatch(b *testing.B) {
 	}
 }
 
+// BenchmarkDeepDispatch uses a precompiled 17-token path with discarded IO; b.Loop
+// excludes graph compilation and measures invocation work only.
 func BenchmarkDeepDispatch(b *testing.B) {
 	leaf := cli.NewCommand("leaf")
 	argv := []string{"leaf"}
@@ -91,6 +101,8 @@ func BenchmarkDeepDispatch(b *testing.B) {
 	}
 }
 
+// BenchmarkGeneration reuses compiled 64-child metadata and measures help width 80,
+// manifest or static partial completion, excluding construction via b.Loop.
 func BenchmarkGeneration(b *testing.B) {
 	application, err := cli.Compile(benchmarkTree(64, 12))
 	if err != nil {
@@ -119,6 +131,8 @@ func BenchmarkGeneration(b *testing.B) {
 	})
 }
 
+// BenchmarkExecutionScenarios reuses precompiled fixed phase/error/JSON/suggestion/
+// cancellation cases with discarded IO; setup is excluded by b.Loop.
 func BenchmarkExecutionScenarios(b *testing.B) {
 	conversion, err := cli.Compile(cli.NewCommand(
 		"tool",

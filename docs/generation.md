@@ -8,15 +8,16 @@ An alias path resolves to the canonical command path.
 pipes; zero leaves content unwrapped. Experimental, deprecated, and replacement
 metadata is rendered in a dedicated status section.
 
-`ManifestJSON` returns `cli/manifest/v1` data. Its `root` object publishes
+`ManifestJSON` returns `go-cli/manifest/v1` data. Its `root` object publishes
 the root command contract, while `commands` retains the ordered descendant
 tree for compatibility. Enum bindings publish allowed values but never default
 or supplied values, and time bindings publish their parse layout. `Markdown`
 returns a complete reference including
 arguments, option constraints, status, aliases, examples, and inherited-option
-provenance. Generation strips terminal controls, has no command side effects,
-and does not mutate compiled metadata. CI should regenerate and byte-compare
-committed artifacts.
+provenance. Help, Markdown and completion strip terminal controls. Manifest JSON
+encodes declared metadata without terminal filtering. Generation has no command
+side effects and does not mutate compiled metadata. CI should regenerate and
+byte-compare committed artifacts.
 
 `Completion` returns scripts for `ShellBash`, `ShellZsh`, `ShellFish`, and
 `ShellPowerShell`; it never edits shell configuration. Applications should

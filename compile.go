@@ -6,8 +6,10 @@ import (
 	"unicode/utf8"
 )
 
-// Application is an immutable compiled command graph safe for concurrent
-// metadata reads.
+// Application is compiled metadata safe for concurrent reads and invocation
+// with independent requests. Callbacks, custom typed values and streams are still
+// application-owned: synchronize shared mutable state. Construct with Compile;
+// nil/zero applications yield internal errors on execution and generation.
 type Application struct {
 	root      *compiledCommand
 	commands  map[int]*compiledCommand
@@ -15,18 +17,30 @@ type Application struct {
 	exitCodes ExitCodePolicy
 }
 
-// Limits bounds hostile construction, argv, completion, and generation work.
+// Limits bounds construction metadata and argv/candidate processing. Zero
+// fields retain defaults; non-zero fields must be positive. These are not callback
+// deadlines, provider allocation caps or terminal display-cell limits.
 type Limits struct {
-	MaximumCommandDepth              int
-	MaximumCommands                  int
-	MaximumOptionsPerCommand         int
-	MaximumArgumentsPerCommand       int
-	MaximumArguments                 int
-	MaximumArgvBytes                 int
-	MaximumMetadataBytes             int
+	// MaximumCommandDepth bounds root-inclusive depth; default 64.
+	MaximumCommandDepth int
+	// MaximumCommands bounds total nodes including root; default 4096.
+	MaximumCommands int
+	// MaximumOptionsPerCommand bounds local option definitions; default 1024.
+	MaximumOptionsPerCommand int
+	// MaximumArgumentsPerCommand bounds positional definitions; default 1024.
+	MaximumArgumentsPerCommand int
+	// MaximumArguments bounds argv token count before parsing; default 4096.
+	MaximumArguments int
+	// MaximumArgvBytes bounds cumulative token bytes; default 1 MiB.
+	MaximumArgvBytes int
+	// MaximumMetadataBytes bounds declared graph metadata, not default value graphs; default 1 MiB.
+	MaximumMetadataBytes int
+	// MaximumCompletionProviderResults bounds candidates inspected after a provider returns; default 1000.
 	MaximumCompletionProviderResults int
-	MaximumCompletionResults         int
-	MaximumCompletionBytes           int
+	// MaximumCompletionResults bounds accepted deduplicated candidates; default 100.
+	MaximumCompletionResults int
+	// MaximumCompletionBytes bounds raw/accepted candidate value and description bytes; default 64 KiB.
+	MaximumCompletionBytes int
 }
 
 // CompileOption configures immutable application compilation.
@@ -48,10 +62,15 @@ func WithLimits(limits Limits) CompileOption {
 // ExitCodePolicy maps stable terminal classifications to portable statuses.
 // Zero fields retain the documented defaults.
 type ExitCodePolicy struct {
-	Usage    int
-	Command  int
+	// Usage covers usage, unknown input, missing and malformed values; default 2.
+	Usage int
+	// Command covers command, validation, cleanup, completion and output errors; default 1.
+	Command int
+	// Canceled is the canceled-execution status; default 130.
 	Canceled int
+	// Deadline is the deadline-exceeded status; default 124.
 	Deadline int
+	// Internal is the invalid construction/state status; default 70.
 	Internal int
 }
 
@@ -106,7 +125,12 @@ type optionGroupSpec struct {
 	names    []string
 }
 
-// Compile validates and snapshots an explicit command graph.
+// Compile validates and snapshots an explicit graph, rejecting nil roots, cycles,
+// reused nodes/bindings, ambiguous positional/subcommand grammar, invalid names,
+// inheritance/group conflicts and limits with ErrInternal-compatible errors.
+// Nil CompileOptions are ignored; callbacks/default custom objects are borrowed.
+// Construction must not mutate concurrently; no handler is executed. A custom
+// CompileOption can return its own error or panic; panics are not contained.
 func Compile(root *Command, options ...CompileOption) (*Application, error) {
 	if root == nil {
 		return nil, newInternalError("compile a nil root command", nil)
@@ -692,6 +716,9 @@ func validateValueContract(valueType, format string, hasFormat bool) error {
 	return nil
 }
 
+// Together groups form presence components. Defaults/Required force a component;
+// exclusive groups must not require two members from a forced component. This
+// checks declaration satisfiability, not invocation value truthiness.
 func validateGroupSatisfiability(groups []optionGroupSpec, options []optionSpec) error {
 	parents := make(map[any]any, len(options))
 	forced := make(map[any]bool, len(options))

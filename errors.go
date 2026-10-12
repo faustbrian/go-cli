@@ -75,7 +75,11 @@ var (
 	ErrInternal = errors.New("cli internal error")
 )
 
-// Error retains a stable classification and an optional underlying cause.
+// Error retains a stable classification and optional cause. Zero/nil values
+// have empty classification; nil Error() is <nil>. Framework diagnostics strip
+// controls but do not promise to redact arbitrary non-secret application errors.
+// Secret-aware callback causes preserve errors.Is while withholding concrete
+// values from errors.As; no secret erasure of retained application state occurs.
 type Error struct {
 	kind    ErrorKind
 	message string

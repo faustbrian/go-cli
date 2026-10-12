@@ -7,6 +7,9 @@ import (
 	"testing"
 )
 
+// FuzzAdapterTranslation maps at most 32-KiB NUL-separated bytes to a fixed
+// parser tree, checking owned failure kinds and known command/option identities.
+// UTF-8/resource prevalidation belongs to the public adapter, not this fixture.
 func FuzzAdapterTranslation(f *testing.F) {
 	for _, seed := range [][]byte{
 		{},

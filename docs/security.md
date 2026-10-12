@@ -52,9 +52,10 @@ file, uses `unsafe`, uses cgo, links runtime internals, reads current working
 directory, calls `os.Exit`, registers signals, or starts hidden goroutines.
 Commands own file, database, network, retry, idempotency, and TOCTOU policy.
 
-Panic recovery is not enabled by default. Explicit recovery middleware must
-avoid formatting secret-bearing values and should retain a safe diagnostic plus
-an application-private stack trace.
+Panic recovery is not enabled. Callbacks should return errors; recovering a
+panic from middleware `Next` does not complete its normal-return publication
+and can leave the continuation join blocked. Any executable-boundary recovery
+must avoid formatting secret-bearing values and must not assume cleanup ran.
 
 See [the repository threat model](threat-model.md) for assets, trust
 boundaries, mitigations, and accepted risks.

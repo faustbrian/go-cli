@@ -8,20 +8,36 @@ import (
 
 // CompletionRequest contains only safe metadata and hostile partial input.
 type CompletionRequest struct {
+	// Command is selected compiled metadata without invocation values; it may include descendants.
 	Command CommandMetadata
+	// Partial is the hostile unfinished token/value, not sanitized input or an authorized resource.
 	Partial string
 }
 
 // CompletionCandidate is one bounded shell completion value.
 type CompletionCandidate struct {
-	Value       string
+	// Value is literal candidate text; controls are stripped, empty/duplicate/oversized values omitted.
+	Value string
+	// Description is optional literal explanatory text, sanitized and counted against the same byte budget.
 	Description string
 }
 
-// CompletionProvider supplies deliberate application-owned dynamic values.
+// CompletionProvider receives hostile partial input and must bound/authorize
+// deliberate external access itself. Calls are synchronous with caller context,
+// may overlap, and are not panic-contained. It owns allocation before return and
+// must return promptly on cancellation; inspection caps cannot preempt it.
+// Return candidates in desired order and filter them to the requested prefix;
+// the framework sanitizes/deduplicates/bounds but adds no dynamic prefix filter.
+// Returned candidates must not be mutated concurrently with processing.
 type CompletionProvider func(context.Context, CompletionRequest) ([]CompletionCandidate, error)
 
-// Complete returns bounded candidates for already shell-tokenized partial argv.
+// Complete returns bounded candidates for shell-tokenized partial argv without
+// executing a command. The final token is unfinished (append empty string after
+// a complete token). Nil application/context is an internal error; invalid argv
+// is usage error. Providers may fail/cancel without partial results. Unprotected
+// cancellation/provider context errors can be returned directly; other provider
+// failures match ErrCompletion. Static secret enum values are omitted.
+// Candidate caps apply after provider return; no shell/file/network IO is added.
 func (application *Application) Complete(
 	ctx context.Context,
 	argv []string,
@@ -308,6 +324,8 @@ func (application *Application) boundCandidates(
 	candidates []CompletionCandidate,
 ) []CompletionCandidate {
 	resultLimit := application.limits.MaximumCompletionResults
+	// Bound raw inspection before sanitizing hostile candidate strings. This
+	// limits our work, not allocation already performed by the provider.
 	inspectionLimit := min(
 		len(candidates), application.limits.MaximumCompletionProviderResults,
 	)

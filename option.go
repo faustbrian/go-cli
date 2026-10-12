@@ -28,7 +28,11 @@ type optionSpec struct {
 	completion  CompletionProvider
 }
 
-// Option is a typed named-option binding.
+// Option is a mutable construction-time named binding. Register and retrieve
+// with the same pointer; copying changes lookup identity. Setters mutate in place
+// and return the receiver (nil stays nil), without synchronization. Compilation
+// snapshots policy but borrows custom parser/provider callbacks and custom defaults.
+// One binding cannot be registered more than once in a compiled graph.
 type Option[T any] struct {
 	spec optionSpec
 }
@@ -53,7 +57,8 @@ func UintOption(name string) *Option[uint64] {
 	return newOption[uint64](name, "unsigned-integer", false, parseUint)
 }
 
-// FloatOption creates a 64-bit floating-point option.
+// FloatOption creates a float64 binding using strconv.ParseFloat, including
+// non-finite values. Domain validation must explicitly reject them when needed.
 func FloatOption(name string) *Option[float64] {
 	return newOption[float64](name, "float", false, parseFloat)
 }
@@ -112,7 +117,8 @@ func newOption[T any](
 	return option
 }
 
-// Short declares a single ASCII shorthand token.
+// Short declares one ASCII letter or digit; zero removes it. Compile rejects
+// reserved h, invalid characters and collisions with local or inherited options.
 func (option *Option[T]) Short(short rune) *Option[T] {
 	if option != nil {
 		option.spec.short = short
@@ -157,7 +163,9 @@ func (option *Option[T]) Completion(provider CompletionProvider) *Option[T] {
 	return option
 }
 
-// Default supplies a value when the option is omitted.
+// Default supplies an omitted value, counting as resolved for Required/groups.
+// Exact []string and map[string]string values are copied on storage/resolution/Get;
+// arbitrary custom values are shallow copies and may alias later invocations.
 func (option *Option[T]) Default(value T) *Option[T] {
 	if option != nil {
 		option.spec.hasDefault = true
@@ -176,7 +184,8 @@ func (option *Option[T]) Required() *Option[T] {
 	return option
 }
 
-// Get returns the typed value or its zero value when omitted.
+// Get returns the typed value or its zero value for omitted/unregistered input.
+// Exact []string and map[string]string values are copied; custom values retain aliases.
 func (option *Option[T]) Get(input Input) T {
 	return bindingValue[T](input, option)
 }

@@ -7,6 +7,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Documentation
+
+- Clarify borrowed callbacks/IO and custom value aliases, cooperative cleanup and
+  middleware continuation limits, literal remainder parsing, output/completion
+  bounds, shutdown ownership and actual generated schema identifiers.
+
 ## [1.1.2] - 2026-10-07
 
 ### Changed

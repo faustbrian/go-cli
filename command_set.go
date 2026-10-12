@@ -33,7 +33,9 @@ type CommandSpec struct {
 }
 
 // CommandSetApplication is an immutable command set safe for concurrent
-// invocation.
+// invocation with independent requests. Compiled metadata does not synchronize
+// caller callbacks, custom defaults or streams. Construct with CompileCommandSet;
+// nil/zero values yield an internal execution error.
 type CommandSetApplication struct {
 	root       *compiledCommand
 	limits     Limits
@@ -41,7 +43,12 @@ type CommandSetApplication struct {
 	hasOptions bool
 }
 
-// CompileCommandSet validates and snapshots a bounded command set.
+// CompileCommandSet snapshots root/direct-child metadata and validates shared
+// option contracts and bounds. Children require non-nil handlers and distinct
+// names other than help/version. Nil compile options are ignored. No handler
+// executes during compilation; custom defaults/callbacks remain borrowed.
+// With no descendant commands, Persistent has no inheritance effect; completion
+// providers can be declared on options but this surface never invokes them.
 func CompileCommandSet(
 	set CommandSet,
 	options ...CompileOption,
@@ -138,7 +145,11 @@ func CompileCommandSet(
 	}, nil
 }
 
-// RunCommand validates, selects, and executes one command-set invocation.
+// RunCommand validates, selects and synchronously executes one bounded request.
+// Handler IO/error/output contracts match Application.RunCommand, without
+// lifecycle hooks, completion or prompting; Invocation.Interactive is always false.
+// Help/version short-circuit execution and can return Err with ExitCode zero.
+// Callbacks may overlap across calls and must return errors rather than panic.
 func (application *CommandSetApplication) RunCommand(
 	ctx context.Context,
 	request Request,

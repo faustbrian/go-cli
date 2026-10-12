@@ -14,6 +14,9 @@ import (
 	"github.com/spf13/pflag"
 )
 
+// TestOwnedParserMatchesTheFormerCobraAdapter protects the fixed supported
+// token grammar and failure partition against the pinned Cobra/pflag fixture,
+// including historical negative-token adaptation; it is not general Cobra parity.
 func TestOwnedParserMatchesTheFormerCobraAdapter(t *testing.T) {
 	root := differentialCommand()
 	cases := map[string][]string{
@@ -280,6 +283,8 @@ func differentialShouldRetryNegative(err error, argv []string) bool {
 	return false
 }
 
+// A NUL-prefixed marker cannot occur in public validated argv; the former
+// Cobra fixture uses it only to preserve negative positional tokens byte-for-byte.
 const differentialNegativePrefix = "\x00cli-negative:"
 
 func differentialEncodeNegative(

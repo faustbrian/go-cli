@@ -1,4 +1,8 @@
-// Package clitest provides parallel-safe in-process command execution helpers.
+// Package clitest provides invocation-local command captures and testing.TB
+// assertions. Start with Run or RunContext and explicit harness options. It uses
+// stdlib buffers, not a subprocess, shell or terminal emulator; it introduces no
+// service/cgo dependency. Parallel calls isolate argv/streams, not application
+// globals, captured callbacks or custom option state; callers synchronize those.
 package clitest
 
 import (
@@ -31,8 +35,11 @@ func WithNonInteractive(nonInteractive bool) Option {
 
 // Execution captures one isolated in-process command result.
 type Execution struct {
+	// Result is the framework terminal result; errors do not automatically fail the test.
 	Result cli.Result
+	// Stdout is captured output from the invocation-local buffer after Run returns.
 	Stdout string
+	// Stderr is captured diagnostics; custom Options can replace the capture writer.
 	Stderr string
 }
 
@@ -48,7 +55,11 @@ func Run(
 	return RunContext(testingContext, context.Background(), application, argv, options...)
 }
 
-// RunContext executes with an explicit caller-owned context.
+// RunContext copies argv and supplies private stdout/stderr buffers, then applies
+// options in order, ignoring nil. Options can replace any stream or policy;
+// custom options must be safe for any concurrent reuse. Execution failures are
+// captured, not automatically fatal; use assertions as appropriate. Borrowed
+// callbacks must finish their IO before return, and no stream is closed here.
 func RunContext(
 	testingContext testing.TB,
 	ctx context.Context,

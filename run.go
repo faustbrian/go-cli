@@ -16,22 +16,34 @@ import (
 
 const defaultCleanupTimeout = 30 * time.Second
 
-// IO contains streams owned by one invocation.
+// IO contains caller-owned streams borrowed by one invocation. The framework
+// never closes them or adds deadlines; caller writers may block or partially write.
 type IO struct {
-	Stdin  io.Reader
+	// Stdin is borrowed input; nil Request.Stdin becomes an empty reader.
+	Stdin io.Reader
+	// Stdout is borrowed success output; nil becomes io.Discard.
 	Stdout io.Writer
+	// Stderr is borrowed diagnostic output; nil becomes io.Discard.
 	Stderr io.Writer
 }
 
-// Request describes one already-tokenized invocation.
+// Request describes one already-tokenized invocation without process-global
+// mutation. Nil IO becomes empty input/discarded output. Concurrent calls need
+// independent or synchronized streams; argv is borrowed for the duration of Run.
 type Request struct {
-	Args   []string
-	Stdin  io.Reader
+	// Args is shell-tokenized argv without the executable; do not mutate during Run.
+	Args []string
+	// Stdin is borrowed for this invocation, never closed by the framework.
+	Stdin io.Reader
+	// Stdout is borrowed terminal output; caller owns synchronization and close.
 	Stdout io.Writer
+	// Stderr is borrowed error output; JSON handler IO discards it, final JSON uses stdout.
 	Stderr io.Writer
-	// NonInteractive prevents commands from requiring terminal input.
+	// NonInteractive rejects InteractionRequired before validation/lifecycle.
+	// It does not detect a terminal or prevent application code from reading IO.
 	NonInteractive bool
-	Output         OutputPolicy
+	// Output selects final rendering and handler stream isolation; zero is human mode.
+	Output OutputPolicy
 }
 
 // Invocation supplies parsed input and explicit IO to a handler.
@@ -54,14 +66,24 @@ func (invocation Invocation) Interactive() bool { return invocation.interactive 
 // Output returns the invocation-local bounded output collector.
 func (invocation Invocation) Output() *Output { return invocation.output }
 
-// Result is the terminal outcome of one in-process invocation.
+// Result is the terminal outcome of one in-process invocation. Err can be a
+// successful help/version signal; use ExitCode for the configured process policy.
+// Render failures join after earlier failures and may follow a partial write.
 type Result struct {
+	// ExitCode is portable status under the configured policy; help/version can be zero with Err set.
 	ExitCode int
-	Err      error
-	Command  CommandMetadata
+	// Err retains terminal failures or help/version signals; joined errors preserve primary-first order.
+	Err error
+	// Command is the selected command view, or zero when selection did not complete.
+	Command CommandMetadata
 }
 
-// Run parses and executes one invocation without changing process-global state.
+// Run validates argv and executes synchronously without process-global changes.
+// It recognizes hidden completion tokens; RunCommand does not. Nil contexts or
+// nil/zero applications fail internally. Help/version skip typed conversion and
+// lifecycle, and return signal errors with status zero. Callbacks/panics/blocking
+// IO are not preempted or recovered. Registered cleanup runs only after normal
+// lifecycle return; no goroutine is started to force a cancellation deadline.
 func (application *Application) Run(ctx context.Context, request Request) Result {
 	result := application.run(ctx, request)
 	return application.withExitCode(result)
@@ -483,6 +505,9 @@ const (
 	middlewareContinuationClosed
 )
 
+// A started continuation owns done closure on normal return. Closing an unused
+// one rejects retained Next calls; joining a running one keeps cleanup from racing
+// protected work. A downstream panic does not publish completion.
 type middlewareContinuation struct {
 	downstream Next
 	done       chan struct{}
@@ -543,6 +568,8 @@ func executeCleanupWithin(
 	if len(command.cleanup) == 0 {
 		return nil
 	}
+	// Detach cancellation, not context values. One deadline covers all hooks;
+	// expiry cannot safely preempt in-process code or skip later release attempts.
 	cleanupContext, cancel := context.WithTimeout(
 		context.WithoutCancel(ctx),
 		timeout,

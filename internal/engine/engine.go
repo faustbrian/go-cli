@@ -1,4 +1,8 @@
-// Package engine contains the dependency-free argv parsing boundary.
+// Package engine owns dependency-free token parsing and shell-script templates
+// for the public cli adapter. Parse consumes a prevalidated command tree; the
+// adapter owns graph/argv limits, typed conversion, cancellation classification
+// and execution. This internal boundary adds no cgo, services, workers or shell
+// execution. Completion returns quoted script data, not installed configuration.
 package engine
 
 import (
@@ -12,12 +16,19 @@ import (
 
 // Command is the parser-neutral subset required for token parsing.
 type Command struct {
-	ID       int
-	Name     string
-	Aliases  []string
-	Summary  string
-	Version  string
-	Options  []Option
+	// ID is caller-assigned selection identity; Parse does not validate uniqueness.
+	ID int
+	// Name is a prevalidated exact token supplied by compilation.
+	Name string
+	// Aliases is borrowed alternate token metadata; do not mutate while parsing.
+	Aliases []string
+	// Summary is declared description metadata retained for generation adapters.
+	Summary string
+	// Version enables root version recognition when non-empty.
+	Version string
+	// Options contains local prevalidated parser contracts.
+	Options []Option
+	// Children contains prevalidated direct children; input ownership stays with the caller.
 	Children []Command
 }
 
@@ -60,6 +71,8 @@ func generateCompletion(command Command, shell string, writer io.Writer) error {
 	return nil
 }
 
+// A deterministic short digest makes shell function identity independent of
+// hostile command spelling; it is naming, not authentication or collision proof.
 func completionFunction(name string) string {
 	digest := sha256.Sum256([]byte(name))
 	return fmt.Sprintf("__go_cli_%x_complete", digest[:6])
@@ -158,25 +171,38 @@ Register-ArgumentCompleter -CommandName {{POWERSHELL_COMMAND}} -ScriptBlock $scr
 `
 
 // UnsupportedShellError identifies an unsupported generator name.
-type UnsupportedShellError struct{ Shell string }
+type UnsupportedShellError struct {
+	// Shell is the unsupported requested target, not a discovered local runtime.
+	Shell string
+}
 
+// Error reports the unsupported generator target; nil receivers are invalid.
 func (err *UnsupportedShellError) Error() string { return "unsupported shell: " + err.Shell }
 
 // Option declares one parser option.
 type Option struct {
-	Key        int
-	Name       string
-	Short      rune
+	// Key maps raw occurrences to the owner’s typed binding identity.
+	Key int
+	// Name is the prevalidated long token without dashes.
+	Name string
+	// Short is a prevalidated shorthand or zero for none.
+	Short rune
+	// Persistent allows this option to survive descent; consumed nonpersistent parent options reject descent.
 	Persistent bool
-	Boolean    bool
+	// Boolean allows a bare flag to publish true without consuming a value token.
+	Boolean bool
 }
 
 // Result contains raw values for owned typed conversion.
 type Result struct {
+	// CommandID is selected caller-assigned identity, with no execution side effect.
 	CommandID int
-	Action    Action
+	// Action distinguishes run from short-circuit help/version recognition.
+	Action Action
+	// Arguments contains raw positional tokens in order; strings retain argv contents.
 	Arguments []string
-	Options   map[int][]string
+	// Options contains newly allocated occurrence slices keyed by binding identity.
+	Options map[int][]string
 }
 
 // Action identifies parser-owned terminal requests.
@@ -208,9 +234,11 @@ const (
 // ParseError insulates public classification from parser implementation
 // details.
 type ParseError struct {
+	// Kind is an owned stable failure classification, without hostile token payloads.
 	Kind FailureKind
 }
 
+// Error returns owned classification text without hostile tokens or wrapped causes.
 func (err *ParseError) Error() string {
 	switch err.Kind {
 	case FailureUsage:
@@ -226,7 +254,12 @@ func (err *ParseError) Error() string {
 	}
 }
 
-// Parse evaluates one immutable command tree without global parser state.
+// Parse evaluates a borrowed prevalidated tree with invocation-local state.
+// A nil context fails, but token traversal does not poll cancellation itself;
+// the public adapter bounds argv and checks cancellation around phases. Names,
+// depth, uniqueness, valid UTF-8 and input byte limits are adapter obligations.
+// It does not convert values, invoke callbacks or treat Remainder specially.
+// Help/version short-circuit and -- switches remaining tokens to positional data.
 func Parse(ctx context.Context, root Command, argv []string) (Result, error) {
 	if ctx == nil {
 		return Result{}, &ParseError{Kind: FailureUsage}

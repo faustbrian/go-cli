@@ -27,10 +27,12 @@ arguments, persistent options, option groups, aliases, nested commands,
 lifecycle hooks, completion, or generated references must use `Command` and
 `Compile`.
 
-JSON and quiet modes isolate handler stdout and stderr, but the framework
-cannot redact human-mode application direct IO, logs, telemetry attributes,
+JSON isolates handler stdout and stderr; quiet isolates stdout and retains
+explicit stderr. The framework cannot redact human-mode application direct IO,
+logs or telemetry attributes,
 panic values, application globals, or secrets exposed by the operating system.
 Applications must honor binding metadata and the security guide at those
 boundaries. `Output.SetData` rejects custom serialization methods; applications
 that require them must serialize into a bounded built-in value before calling
-the framework.
+the framework. Application success data and `Info` records are not automatically
+redacted merely because a command declares a secret binding.

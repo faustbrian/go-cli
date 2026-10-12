@@ -33,6 +33,12 @@ argv order; key/value options use the last value for a repeated key.
 Use `TypedArgument` and `TypedOption` for a domain type. Parsers receive one
 exact token and return a value or error. Nil parsers fail compilation. Generic
 bindings preserve typed handler access without reflection or string maps.
+Exact built-in `[]string` and `map[string]string` values are copied on default
+storage/resolution and `Get`; arbitrary custom values are not deep-cloned and
+can alias application state or later invocations. Remainder consumes final
+positionals; use `--` to stop option parsing, and a slice binding to collect all
+tokens rather than a scalar parser’s last token.
+
 Custom value-type names must be non-empty, valid, control-free metadata. Time
 layouts must also be non-empty and control-free and are published through
 option metadata, manifests, and Markdown.

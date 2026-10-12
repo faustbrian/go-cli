@@ -47,11 +47,14 @@ deadline-bearing context. It cannot erase the primary failure. Multiple failures
 
 Middleware is explicit and ordered. It receives `CommandMetadata` and `Next`,
 not input values. Logging, correlation, tracing, timing, audit, and deliberate
-panic recovery can therefore be composed without a mandatory backend.
+error handling can therefore be composed without a mandatory backend.
 `Next` is single-use and valid only while its middleware callback is active.
 The runtime waits for a continuation that started concurrently before cleanup,
 and rejects a retained continuation invoked after the callback returns.
 
 The core does not recover panics by default. Ordinary usage, validation, and
 command failures must be returned. An application that deliberately adds panic
-recovery should do so in middleware and must redact its diagnostics.
+recovery must redact its diagnostics and cannot assume normal cleanup occurred.
+In particular, recovering a downstream panic around `Next` does not complete
+the continuation’s normal-return publication; its join can remain blocked.
+Handlers and lifecycle hooks should return errors instead of panicking.

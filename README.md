@@ -133,7 +133,7 @@ preserves omitted, defaulted, and explicit values; custom domain types use
 ## Execution modes
 
 Set `Request.Output.Mode` to `OutputHuman`, `OutputJSON`, or `OutputQuiet`.
-JSON writes one deterministic `cli/v1` success or error envelope to stdout.
+JSON writes one deterministic `go-cli/v1` success or error envelope to stdout.
 Human and quiet errors go to stderr. `Request.NonInteractive` prevents commands
 declared with `InteractionRequired` from reaching side effects.
 

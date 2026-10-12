@@ -1,4 +1,8 @@
-// Package referenceapp defines the canonical generated-document fixture.
+// Package referenceapp defines the canonical metadata fixture for checked-in
+// command references. Start with New; every call constructs fresh bindings and
+// compiles a stdlib-only application. Its no-op deploy callback does not deploy,
+// contact services, prompt or introduce cgo; it is repository tooling, not an
+// adoption application. Regenerate with cmd/generate-reference.
 package referenceapp
 
 import (

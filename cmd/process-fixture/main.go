@@ -1,4 +1,9 @@
-// Command process-fixture proves the narrow executable integration boundary.
+// Command process-fixture models caller-owned process/signal integration for
+// repository tests, not a public daemon or terminal UI. It compiles one JSON
+// command, registers interrupt/TERM and owns a signal-forwarding goroutine.
+// Normal shutdown stops delivery and joins that goroutine; a second signal
+// exits immediately and can skip ordinary cleanup. No external service/cgo is
+// required. Tests build/run this executable rather than using it as an API.
 package main
 
 import (

@@ -37,12 +37,19 @@ const (
 
 // OutputPolicy controls one invocation's presentation contract.
 type OutputPolicy struct {
-	Mode    OutputMode
+	// Mode defaults to OutputHuman; invalid modes yield an internal error.
+	Mode OutputMode
+	// NoColor declares no-color policy; current framework output emits no color regardless.
 	NoColor bool
-	Width   int
+	// Width is a rune-count help wrapping target; non-positive values leave help unwrapped.
+	Width int
 }
 
-// Output buffers bounded invocation output until terminal success is known.
+// Output buffers invocation success output with synchronized Info/SetData and
+// snapshot operations. Its zero value is usable; do not copy after use. No worker
+// is started and writes after final snapshot are not joined into the response.
+// Values supplied to SetData must remain stable during its traversal/encoding.
+// Secret values are not automatically removed from application success data.
 type Output struct {
 	mu        sync.Mutex
 	infos     []string
@@ -53,7 +60,10 @@ type Output struct {
 	dataBytes int
 }
 
-// Info records a bounded informational line.
+// Info appends a success-only line under the cumulative 1000-record/1-MiB cap.
+// Terminal controls are removed at human rendering; JSON omits informational
+// lines and quiet omits all success output. Failure leaves prior records intact.
+// Nil receivers fail internally; cap failures match ErrOutput.
 func (output *Output) Info(message string) error {
 	if output == nil {
 		return newInternalError("write through a nil output", nil)
@@ -76,6 +86,12 @@ func (output *Output) Info(message string) error {
 // TextMarshaler, Stringer, Formatter, and error implementations are rejected
 // because their work and allocation cannot be bounded by the runtime. Fields
 // tagged with omitzero also reject application-defined IsZero callbacks.
+// The last successful call replaces prior data as encoded bytes and human text;
+// later caller mutation does not change that snapshot. A failed call retains prior
+// data. Fixed bounds include 1 MiB cumulative size, 128 traversal depth, 100,000
+// collection entries and 4096 encoder type/field nodes. Errors match ErrOutput
+// (nil receiver matches ErrInternal); unsupported/non-finite JSON values can fail.
+// No panic guard or concurrent-input-mutation protection surrounds traversal.
 func (output *Output) SetData(value any) error {
 	if output == nil {
 		return newInternalError("write through a nil output", nil)
@@ -352,6 +368,8 @@ func estimateOutputSizeWithTypes(
 	}
 }
 
+// Inspect encoder-reachable types even for nil/empty containers: json.Marshal
+// can construct those encoders before discovering there are no live elements.
 type outputTypeState struct {
 	seen     map[reflect.Type]struct{}
 	nodes    int
@@ -412,6 +430,8 @@ func (state *outputTypeState) add(typ reflect.Type, depth int) error {
 	return nil
 }
 
+// Account for encoding/json HTML and line-separator escape expansion without
+// invoking custom callbacks; raw length decisively over budget avoids scanning.
 func rawMessageJSONSize(raw []byte) int {
 	if len(raw) > maximumOutputBytes {
 		return maximumOutputBytes + 1

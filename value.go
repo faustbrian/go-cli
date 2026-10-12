@@ -24,7 +24,10 @@ type resolvedValue struct {
 	state ValueState
 }
 
-// Input is an immutable invocation-local typed value set.
+// Input is an invocation-local binding lookup. Its zero value yields omitted
+// states and zero values. Get copies exact []string and map[string]string values,
+// but custom pointers, slices, maps and structs are returned by ordinary Go value
+// assignment, not deep cloning; callers own their synchronization and lifetime.
 type Input struct {
 	values map[any]resolvedValue
 }
@@ -48,6 +51,8 @@ func bindingState(input Input, binding any) ValueState {
 	return input.values[binding].state
 }
 
+// Only the built-in collection contracts are copied. Arbitrary generic values
+// retain their aliases rather than invoking reflection or application clone hooks.
 func cloneValue[T any](value T) T {
 	switch typed := any(value).(type) {
 	case []string:

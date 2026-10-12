@@ -12,6 +12,8 @@ import (
 	cli "github.com/faustbrian/go-cli"
 )
 
+// FuzzRunArgv splits at NUL into hostile argv under a 1-MiB fixture cap;
+// the fixed graph checks portable exit status, not successful command execution.
 func FuzzRunArgv(f *testing.F) {
 	for _, seed := range [][]byte{
 		{},
@@ -47,6 +49,8 @@ func FuzzRunArgv(f *testing.F) {
 	})
 }
 
+// FuzzCompileCommandGraph varies root/child/alias metadata at most 64 KiB;
+// malformed graphs may reject, and construction must not panic.
 func FuzzCompileCommandGraph(f *testing.F) {
 	f.Add("root", "child", "alias")
 	f.Add("røøt", "e\u0301", "é")
@@ -63,6 +67,8 @@ func FuzzCompileCommandGraph(f *testing.F) {
 	})
 }
 
+// FuzzTypedConversion varies signed integer/duration/enum tokens under 1 MiB
+// and checks portable statuses for accepted or rejected conversion.
 func FuzzTypedConversion(f *testing.F) {
 	f.Add("0", "1s", "json")
 	f.Add("-9223372036854775808", "2562047h47m16.854775807s", "text")
@@ -90,6 +96,8 @@ func FuzzTypedConversion(f *testing.F) {
 	})
 }
 
+// FuzzCompletionPartialArgv varies NUL-separated partial tokens under 1 MiB
+// against a fixed static graph; no external provider or live shell is exercised.
 func FuzzCompletionPartialArgv(f *testing.F) {
 	f.Add([]byte("de"))
 	f.Add([]byte("deploy\x00--fo"))
@@ -112,6 +120,8 @@ func FuzzCompletionPartialArgv(f *testing.F) {
 	})
 }
 
+// FuzzLifecycleFailureAndCancellation maps eight bits to returned phase failures
+// and cancellation, checking at-most-once handler/cleanup and portable status.
 func FuzzLifecycleFailureAndCancellation(f *testing.F) {
 	for _, seed := range []uint8{0, 1, 2, 4, 8, 16, 32, 64, 127, 255} {
 		f.Add(seed)
@@ -170,6 +180,8 @@ func FuzzLifecycleFailureAndCancellation(f *testing.F) {
 	})
 }
 
+// FuzzHelpMarkdownAndManifestGeneration varies metadata and rune width, accepting
+// compile rejection and checking manifest identity/control-filtered text/unevaluated scripts.
 func FuzzHelpMarkdownAndManifestGeneration(f *testing.F) {
 	f.Add("summary", "description", "example", uint16(80))
 	f.Add("safe\u202eunsafe", "line\x1b[31m", "one\rtwo", uint16(1))
@@ -215,6 +227,8 @@ func FuzzHelpMarkdownAndManifestGeneration(f *testing.F) {
 	})
 }
 
+// FuzzJSONErrorAndSuccessRendering varies at most 32-KiB result/error bytes and
+// checks a JSON envelope, empty stderr and portable status, not application redaction.
 func FuzzJSONErrorAndSuccessRendering(f *testing.F) {
 	f.Add([]byte("ordinary"), false)
 	f.Add([]byte("control\x1b\u202e\r\n"), true)
@@ -250,6 +264,8 @@ func FuzzJSONErrorAndSuccessRendering(f *testing.F) {
 	})
 }
 
+// FuzzHumanTerminalRendering varies at most 32-KiB Info bytes and checks removal
+// of forbidden terminal/bidi controls; the assertion allows line separators.
 func FuzzHumanTerminalRendering(f *testing.F) {
 	f.Add([]byte("ordinary"))
 	f.Add([]byte("ansi\x1b[31m osc\x1b]8;;url\a bidi\u202e return\r"))

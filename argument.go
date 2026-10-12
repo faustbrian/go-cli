@@ -12,7 +12,8 @@ const (
 	ArgumentOptional
 	// ArgumentRepeated consumes zero or more tokens and must be final.
 	ArgumentRepeated
-	// ArgumentRemainder consumes every remaining token and must be final.
+	// ArgumentRemainder consumes remaining positional tokens and must be final;
+	// use -- to stop option parsing.
 	ArgumentRemainder
 )
 
@@ -21,7 +22,10 @@ type ArgumentDefinition interface {
 	argumentSpecification() argumentSpec
 }
 
-// Parser converts one exact argv token into an application-owned type.
+// Parser converts one exact argv token into an application-owned type. Calls
+// are synchronous, may overlap across invocations and are not panic-contained.
+// It receives no context; callers must bound its work and return errors. A parsed
+// custom value is not deep-cloned. Nil parsers are rejected during compilation.
 type Parser[T any] func(string) (T, error)
 
 type argumentSpec struct {
@@ -39,7 +43,11 @@ type argumentSpec struct {
 	completion  CompletionProvider
 }
 
-// Argument is a typed positional argument binding.
+// Argument is a mutable construction-time positional binding. Keep the same
+// pointer for registration and Get/State; copying it changes binding identity.
+// Compile snapshots policy, but borrows its parser/provider callbacks. Setters
+// mutate in place, return the receiver (nil stays nil), and are not synchronized.
+// A binding cannot be registered twice within one compiled graph.
 type Argument[T any] struct {
 	spec argumentSpec
 }
@@ -64,7 +72,8 @@ func UintArgument(name string) *Argument[uint64] {
 	return newArgument[uint64](name, "unsigned-integer", ArgumentRequired, parseUint)
 }
 
-// FloatArgument creates a 64-bit floating-point argument.
+// FloatArgument creates a float64 binding using strconv.ParseFloat, including
+// non-finite values. Domain validation must explicitly reject them when needed.
 func FloatArgument(name string) *Argument[float64] {
 	return newArgument[float64](name, "float", ArgumentRequired, parseFloat)
 }
@@ -127,12 +136,14 @@ func scalarParser[T any](parser Parser[T]) func([]string) (any, error) {
 	}
 }
 
-// Get returns the typed value or its zero value when omitted.
+// Get returns the typed value or its zero value for omitted/unregistered input.
+// Built-in string collections are copied; custom values retain ordinary aliases.
 func (argument *Argument[T]) Get(input Input) T {
 	return bindingValue[T](input, argument)
 }
 
-// State distinguishes omitted, defaulted, and explicit input.
+// State reports omitted optional/unregistered input or explicit resolved
+// positionals, including an empty repeated binding; positional defaults are not supplied.
 func (argument *Argument[T]) State(input Input) ValueState {
 	return bindingState(input, argument)
 }
@@ -146,7 +157,9 @@ func (argument *Argument[T]) Optional() *Argument[T] {
 	return argument
 }
 
-// Remainder consumes all remaining positional tokens without option parsing.
+// Remainder makes this the final catch-all positional argument. It does not
+// itself disable option parsing: use -- for literal hyphen-prefixed tokens.
+// Use StringsArgument to collect every token; a scalar parser uses the last one.
 func (argument *Argument[T]) Remainder() *Argument[T] {
 	if argument != nil {
 		argument.spec.cardinality = ArgumentRemainder

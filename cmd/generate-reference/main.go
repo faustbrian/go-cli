@@ -1,4 +1,8 @@
-// Command generate-reference reproduces checked-in command documentation.
+// Command generate-reference reproduces docs/generated from referenceapp.New.
+// Run go run ./cmd/generate-reference -out DIR with a trusted operator-owned
+// directory. It writes readable Markdown/manifest/shell scripts but executes no
+// shell or provider and adds no cgo/service dependency. Writes are sequential
+// and non-transactional; failure can leave partially replaced artifacts.
 package main
 
 import (

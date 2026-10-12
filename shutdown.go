@@ -23,7 +23,9 @@ const (
 
 // ShutdownController translates caller-delivered signals without registering
 // process signal handlers or starting goroutines. The application remains
-// responsible for signal.Notify and signal.Stop ownership.
+// responsible for signal.Notify/signal.Stop, waiting and forced process exit.
+// Construct with NewShutdownController; methods are synchronized and nil-safe,
+// but a non-nil zero value is not usable. Do not copy after construction.
 type ShutdownController struct {
 	context context.Context
 	cancel  context.CancelCauseFunc
@@ -33,7 +35,9 @@ type ShutdownController struct {
 	closed  bool
 }
 
-// NewShutdownController derives a cancelable context from the caller context.
+// NewShutdownController derives a cancel-cause context; nil parent is an
+// ErrInternal-compatible construction error. Call Close to release it even when
+// no signal arrives. Parent cancellation does not close the Forced channel.
 func NewShutdownController(parent context.Context) (*ShutdownController, error) {
 	if parent == nil {
 		return nil, newInternalError("create shutdown controller with nil context", nil)
@@ -56,7 +60,8 @@ func (controller *ShutdownController) Context() context.Context {
 	return controller.context
 }
 
-// Forced closes after the second delivered signal.
+// Forced returns the controller-owned channel closed by the second signal,
+// never by Close/parent cancellation. Callers only receive; nil receiver returns nil.
 func (controller *ShutdownController) Forced() <-chan struct{} {
 	if controller == nil {
 		return nil
@@ -65,7 +70,10 @@ func (controller *ShutdownController) Forced() <-chan struct{} {
 	return controller.forced
 }
 
-// Signal applies graceful-then-forced policy to one caller-delivered signal.
+// Signal applies first-cancel/second-forced policy with nil cause replaced by
+// ErrSignal. The first cancellation cause wins. It never exits or stops work;
+// ShutdownAlreadyForced also describes nil/closed receivers and is not proof
+// that Forced closed. Repeated calls are safe alongside Close.
 func (controller *ShutdownController) Signal(cause error) ShutdownAction {
 	if controller == nil {
 		return ShutdownAlreadyForced
@@ -91,7 +99,9 @@ func (controller *ShutdownController) Signal(cause error) ShutdownAction {
 	}
 }
 
-// Close releases the derived context when signal handling is no longer needed.
+// Close idempotently cancels/releases the derived context and rejects later
+// signal transitions. It does not close Forced, wait for work or stop signal.Notify;
+// the application owns those operations. Nil receiver is a no-op.
 func (controller *ShutdownController) Close() {
 	if controller == nil {
 		return

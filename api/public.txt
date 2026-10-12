@@ -151,23 +151,23 @@ type CommandSet struct { 	Name string  	Version string  	Commands []CommandSpec 
 type CommandSetApplication struct { }
 type CommandSpec struct { 	Name string  	Summary string  	Options []OptionDefinition  	Handler Handler }
 type CompileOption func(*compileConfiguration) error
-type CompletionCandidate struct { 	Value       string 	Description string }
+type CompletionCandidate struct { 	Value string  	Description string }
 type CompletionProvider func(context.Context, CompletionRequest) ([]CompletionCandidate, error)
-type CompletionRequest struct { 	Command CommandMetadata 	Partial string }
+type CompletionRequest struct { 	Command CommandMetadata  	Partial string }
 type Error struct { }
 type ErrorKind string
-type ExitCodePolicy struct { 	Usage    int 	Command  int 	Canceled int 	Deadline int 	Internal int }
+type ExitCodePolicy struct { 	Usage int  	Command int  	Canceled int  	Deadline int  	Internal int }
 type Handler func(context.Context, Invocation) error
 type HelpOptions struct { 	Width int }
-type IO struct { 	Stdin  io.Reader 	Stdout io.Writer 	Stderr io.Writer }
+type IO struct { 	Stdin io.Reader  	Stdout io.Writer  	Stderr io.Writer }
 type Input struct { }
 type Interaction uint8
 type Invocation struct { }
-type Limits struct { 	MaximumCommandDepth              int 	MaximumCommands                  int 	MaximumOptionsPerCommand         int 	MaximumArgumentsPerCommand       int 	MaximumArguments                 int 	MaximumArgvBytes                 int 	MaximumMetadataBytes             int 	MaximumCompletionProviderResults int 	MaximumCompletionResults         int 	MaximumCompletionBytes           int }
-type Manifest struct { 	Schema   string            `json:"schema"` 	Name     string            `json:"name"` 	Version  string            `json:"version,omitempty"` 	Root     ManifestCommand   `json:"root"` 	Commands []ManifestCommand `json:"commands,omitempty"` }
-type ManifestArgument struct { 	Name          string              `json:"name"` 	Type          string              `json:"type"` 	Cardinality   ArgumentCardinality `json:"cardinality"` 	Description   string              `json:"description,omitempty"` 	Secret        bool                `json:"secret,omitempty"` 	AllowedValues []string            `json:"allowed_values,omitempty"` 	Format        string              `json:"format,omitempty"` }
-type ManifestCommand struct { 	Name             string             `json:"name"` 	Path             string             `json:"path"` 	Aliases          []string           `json:"aliases,omitempty"` 	Summary          string             `json:"summary,omitempty"` 	Description      string             `json:"description,omitempty"` 	Examples         []string           `json:"examples,omitempty"` 	Documentation    string             `json:"documentation,omitempty"` 	Hidden           bool               `json:"hidden,omitempty"` 	Experimental     bool               `json:"experimental,omitempty"` 	Deprecated       string             `json:"deprecated,omitempty"` 	Replacement      string             `json:"replacement,omitempty"` 	Arguments        []ManifestArgument `json:"arguments,omitempty"` 	Options          []ManifestOption   `json:"options,omitempty"` 	InheritedOptions []ManifestOption   `json:"inherited_options,omitempty"` 	Commands         []ManifestCommand  `json:"commands,omitempty"` }
-type ManifestOption struct { 	Name          string   `json:"name"` 	Short         string   `json:"short,omitempty"` 	Type          string   `json:"type"` 	Description   string   `json:"description,omitempty"` 	Persistent    bool     `json:"persistent,omitempty"` 	Secret        bool     `json:"secret,omitempty"` 	Defaulted     bool     `json:"defaulted,omitempty"` 	Required      bool     `json:"required,omitempty"` 	Source        string   `json:"source,omitempty"` 	AllowedValues []string `json:"allowed_values,omitempty"` 	Format        string   `json:"format,omitempty"` }
+type Limits struct { 	MaximumCommandDepth int  	MaximumCommands int  	MaximumOptionsPerCommand int  	MaximumArgumentsPerCommand int  	MaximumArguments int  	MaximumArgvBytes int  	MaximumMetadataBytes int  	MaximumCompletionProviderResults int  	MaximumCompletionResults int  	MaximumCompletionBytes int }
+type Manifest struct { 	Schema string `json:"schema"`  	Name string `json:"name"`  	Version string `json:"version,omitempty"`  	Root ManifestCommand `json:"root"`  	Commands []ManifestCommand `json:"commands,omitempty"` }
+type ManifestArgument struct { 	Name string `json:"name"`  	Type string `json:"type"`  	Cardinality ArgumentCardinality `json:"cardinality"`  	Description string `json:"description,omitempty"`  	Secret bool `json:"secret,omitempty"`  	AllowedValues []string `json:"allowed_values,omitempty"`  	Format string `json:"format,omitempty"` }
+type ManifestCommand struct { 	Name string `json:"name"`  	Path string `json:"path"`  	Aliases []string `json:"aliases,omitempty"`  	Summary string `json:"summary,omitempty"`  	Description string `json:"description,omitempty"`  	Examples []string `json:"examples,omitempty"`  	Documentation string `json:"documentation,omitempty"`  	Hidden bool `json:"hidden,omitempty"`  	Experimental bool `json:"experimental,omitempty"`  	Deprecated string `json:"deprecated,omitempty"`  	Replacement string `json:"replacement,omitempty"`  	Arguments []ManifestArgument `json:"arguments,omitempty"`  	Options []ManifestOption `json:"options,omitempty"`  	InheritedOptions []ManifestOption `json:"inherited_options,omitempty"`  	Commands []ManifestCommand `json:"commands,omitempty"` }
+type ManifestOption struct { 	Name string `json:"name"`  	Short string `json:"short,omitempty"`  	Type string `json:"type"`  	Description string `json:"description,omitempty"`  	Persistent bool `json:"persistent,omitempty"`  	Secret bool `json:"secret,omitempty"`  	Defaulted bool `json:"defaulted,omitempty"`  	Required bool `json:"required,omitempty"`  	Source string `json:"source,omitempty"`  	AllowedValues []string `json:"allowed_values,omitempty"`  	Format string `json:"format,omitempty"` }
 type Middleware func(context.Context, CommandMetadata, Next) error
 type Next func(context.Context) error
 type OptionDefinition interface { 	optionSpecification() optionSpec }
@@ -175,10 +175,10 @@ type OptionMetadata struct { }
 type Option[T any] struct { }
 type Output struct { }
 type OutputMode uint8
-type OutputPolicy struct { 	Mode    OutputMode 	NoColor bool 	Width   int }
+type OutputPolicy struct { 	Mode OutputMode  	NoColor bool  	Width int }
 type Parser[T any] func(string) (T, error)
-type Request struct { 	Args   []string 	Stdin  io.Reader 	Stdout io.Writer 	Stderr io.Writer  	NonInteractive bool 	Output         OutputPolicy }
-type Result struct { 	ExitCode int 	Err      error 	Command  CommandMetadata }
+type Request struct { 	Args []string  	Stdin io.Reader  	Stdout io.Writer  	Stderr io.Writer  	NonInteractive bool  	Output OutputPolicy }
+type Result struct { 	ExitCode int  	Err error  	Command CommandMetadata }
 type Shell string
 type ShutdownAction uint8
 type ShutdownController struct { }
