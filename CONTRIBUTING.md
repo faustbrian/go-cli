@@ -50,8 +50,8 @@ changes, using a disposable cache for each bounded session:
 ```
 
 The deterministic command executes fuzz seeds/corpus, not active fuzzing.
-Install the verified public v2.1.1 binary archive for your platform from
-[go-library-tools releases](https://github.com/faustbrian/go-library-tools/releases/tag/v2.1.1),
+Install the verified public v2.4.0 binary archive for your platform from
+[go-library-tools releases](https://github.com/faustbrian/go-library-tools/releases/tag/v2.4.0),
 checking `checksums.txt` against `.golib.yaml` and the archive against that
 checksum set. Add the extracted `golib` binary to `PATH`, or set `GOLIB` to
 its path; do not build Tools from source. CI installs and verifies that public
@@ -114,3 +114,13 @@ Follow [repository structure policy](AGENTS.md#repository-structure). New module
 require an explicit purpose, ownership boundary, dependency review, package
 catalog entry, full quality gates, documentation, changelog, license, security
 policy, compatibility plan, and release dry-run.
+
+## Source Documentation
+
+Install the public `golib` v2.4.0 verifier declared in `.golib.yaml` and
+validate its declared checksum before repository checks. Run
+`make source-docs-check` for the tracked-source documentation contract.
+`make check`, `make check-full` and `make ci` require the same strict check.
+Required CI also checks all tracked source, including inactive build variants.
+Manual-review findings stay visible; structural success does not certify prose
+truth, specification conformance or generator reproducibility.
