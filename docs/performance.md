@@ -1,5 +1,8 @@
 # Performance
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: Operations and deployment recipes](operations.md)
+
 Correctness, stable semantics, startup safety, and bounded work outrank
 headline benchmarks. The comparative harness measures cold and repeated
 invocation of one equivalent observable command contract across `cli`, Cobra,

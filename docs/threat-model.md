@@ -1,5 +1,8 @@
 # Threat model
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: Operations and deployment recipes](operations.md)
+
 Version: `CLI-TM-1.1`
 
 Owner: go-cli maintainers

@@ -1,5 +1,8 @@
 # CLI benchmark harness
 
+[Documentation map](../docs/index.md) · [Repository README](../README.md)
+[Next: Documentation map](../docs/index.md)
+
 This internal, non-releasable module measures one equivalent observable command
 contract across `go-cli`, Cobra, `urfave/cli`, and Kong. The standard `flag`
 package is retained separately as a parsing floor because it does not own a
@@ -127,7 +130,7 @@ requirements of the application being built.
 - [Security policy](../SECURITY.md)
 - [Support policy](../SUPPORT.md)
 - [License](../LICENSE)
-- [Golib ecosystem index](https://github.com/faustbrian/go-library-tools/blob/v1.4.0/docs/ecosystem/README.md)
+- [Golib ecosystem index](https://github.com/faustbrian/go-library-tools/blob/v1.8.4/docs/ecosystem/README.md)
 
 This harness belongs only in the Golib engineering inventory. It must not
 appear in the consumer package catalog.

@@ -1,10 +1,7 @@
 # cli
 
 [![CI](https://github.com/faustbrian/go-cli/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/faustbrian/go-cli/actions/workflows/ci.yml)
-[![CodeQL](https://img.shields.io/badge/CodeQL-required-blue)](https://github.com/faustbrian/go-cli/actions/workflows/ci.yml)
-[![Coverage](https://img.shields.io/badge/coverage-100%25_required-blue)](CONTRIBUTING.md#verification)
-[![Mutation](https://img.shields.io/badge/mutation-full%2Frelease-blue)](CONTRIBUTING.md#verification)
-[![Documentation](https://img.shields.io/badge/docs-checked_in_CI-blue)](docs/)
+[![Documentation](https://img.shields.io/badge/docs-adoption_and_API-blue)](docs/index.md)
 [![Go Reference](https://pkg.go.dev/badge/github.com/faustbrian/go-cli.svg)](https://pkg.go.dev/github.com/faustbrian/go-cli)
 [![Release](https://img.shields.io/github/v/release/faustbrian/go-cli?sort=semver)](https://github.com/faustbrian/go-cli/releases)
 [![Go](https://img.shields.io/badge/go-1.27.0-00ADD8?logo=go)](https://go.dev/)
@@ -22,13 +19,24 @@ discovery, global registration, configuration loading, prompts, logging, or
 telemetry exporters.
 
 For ecosystem-wide package selection, construction, ownership, and lifecycle
-guidance, see the versioned [Golib ecosystem index](https://github.com/faustbrian/go-library-tools/tree/531e4db50fd81a7201257a7b488a0cf22d333aca/docs/ecosystem)
-and its [Tooling family guidance](https://github.com/faustbrian/go-library-tools/blob/v1.4.0/docs/ecosystem/design-language.md#package-families-and-selection).
+guidance, see the versioned [Golib ecosystem index](https://github.com/faustbrian/go-library-tools/blob/v1.8.4/docs/ecosystem/README.md)
+and its [Tooling family guidance](https://github.com/faustbrian/go-library-tools/blob/v1.8.4/docs/ecosystem/design-language.md#package-families-and-selection).
 
 The root module is stable at v1, follows Semantic Versioning, and requires Go
 1.27.0 or newer. Releases use root `vX.Y.Z` tags. Security corrections remain
 on the supported v1 line and are documented with migration guidance when they
 tighten hostile-input behavior.
+
+## Adoption entry points
+
+The root module is `github.com/faustbrian/go-cli` (stable).
+It requires Go 1.27.0. Pin the published `v1.1.2` root tag
+with `go get github.com/faustbrian/go-cli@v1.1.2`.
+Install only the modules your application imports; nested module status and
+migration boundaries remain documented separately.
+
+Start with the [documentation map](docs/index.md) for package selection,
+examples, operational constraints, and contributor references.
 
 ## Install
 

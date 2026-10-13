@@ -1,5 +1,8 @@
 # Security
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: Operations and deployment recipes](operations.md)
+
 Mark secret arguments and options with `Secret`. Framework diagnostics,
 conversion causes, metadata, manifests, help defaults, middleware, completion,
 and JSON envelopes omit secret values. Dynamic completion on secret bindings is

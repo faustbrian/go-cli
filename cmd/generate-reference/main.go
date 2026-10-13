@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	cli "github.com/faustbrian/go-cli"
 	"github.com/faustbrian/go-cli/internal/referenceapp"
@@ -37,6 +38,11 @@ func generate(outputDirectory string) error {
 	if err != nil {
 		return err
 	}
+	// Repository navigation belongs to this published reference envelope, not
+	// the reusable Application.Markdown output for arbitrary consumer commands.
+	markdown = strings.Replace(markdown, "\n\n",
+		"\n\n[Documentation map](../index.md) · [Repository README](../../README.md)\n"+
+			"[Next: Operations and deployment recipes](../operations.md)\n\n", 1)
 	manifest, err := application.ManifestJSON()
 	if err != nil {
 		return err

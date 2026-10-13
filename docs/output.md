@@ -1,5 +1,8 @@
 # Output contract
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: Operations and deployment recipes](operations.md)
+
 `OutputHuman` emits buffered informational records and success data to stdout.
 Errors go to stderr. `OutputQuiet` suppresses successful records without
 changing execution and still writes errors to stderr. `OutputJSON` writes one

@@ -1,5 +1,8 @@
 # Parser engine decision
 
+[Documentation map](../index.md) · [Repository README](../../README.md)
+[Next: Operations and deployment recipes](../operations.md)
+
 Status: amended on 2026-07-28. The initial Cobra adapter decision from
 2026-07-22 is superseded before `v1.0.0`.
 

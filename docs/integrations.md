@@ -1,5 +1,8 @@
 # Optional ecosystem composition
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: Operations and deployment recipes](operations.md)
+
 Integrations remain application-owned or dependency-isolated nested modules.
 Core has no runtime module dependencies.
 

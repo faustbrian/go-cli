@@ -1,5 +1,8 @@
 # `tool` command reference
 
+[Documentation map](../index.md) · [Repository README](../../README.md)
+[Next: Operations and deployment recipes](../operations.md)
+
 ## `tool`
 
 Canonical cli reference application

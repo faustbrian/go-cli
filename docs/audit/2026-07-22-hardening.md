@@ -1,5 +1,8 @@
 # Hardening audit: 2026-07-22
 
+[Documentation map](../index.md) · [Repository README](../../README.md)
+[Next: Operations and deployment recipes](../operations.md)
+
 This report records the evidence-driven hardening review of `go-cli`. The
 review covers the command graph, parser boundary, lifecycle, generated
 artifacts, dependency boundary, documentation, and release gates. It remains

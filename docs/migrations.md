@@ -1,5 +1,8 @@
 # Migration guidance
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: Parser engine decision](architecture/parser-engine.md)
+
 ## Cobra
 
 Replace exported `*cobra.Command` construction with `NewCommand`, typed binding

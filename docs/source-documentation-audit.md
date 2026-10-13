@@ -1,5 +1,8 @@
 # Source documentation audit
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: Operations and deployment recipes](operations.md)
+
 ## Contract and scope
 
 Tier A source documentation from `3c744bdd6fc6541f2d9c02b498c4d271b54952b3`.

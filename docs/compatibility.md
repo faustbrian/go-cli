@@ -1,5 +1,8 @@
 # Compatibility and release policy
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: Parser engine decision](architecture/parser-engine.md)
+
 The module follows Semantic Versioning. Public exported identifiers, typed
 binding semantics, parser forms, Unicode policy, generated schemas, output
 envelopes, error kinds and sentinels, default exit codes, completion protocol,

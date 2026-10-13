@@ -1,5 +1,8 @@
 # Errors, exit codes, cancellation, and shutdown
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: Operations and deployment recipes](operations.md)
+
 `*cli.Error` exposes a stable `Kind`, retains safe causes, and supports
 `errors.Is` and `errors.As`. Sentinel errors cover help, version, unknown
 command, unknown option, missing and malformed values, usage, validation,

@@ -1,5 +1,8 @@
 # Intentional limitations
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: Operations and deployment recipes](operations.md)
+
 `cli` is not a dependency-injection container, application framework,
 configuration loader, secret client, logging backend, telemetry exporter,
 scheduler, queue, migration engine, importer, SSH client, daemon supervisor,

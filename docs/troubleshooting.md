@@ -1,5 +1,8 @@
 # Troubleshooting and FAQ
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: Operations and deployment recipes](operations.md)
+
 ## Why did my handler not run?
 
 Parsing, typed conversion, required values, option groups, interaction policy,

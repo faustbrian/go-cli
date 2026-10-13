@@ -1,5 +1,8 @@
 # Help, completion, and references
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: Operations and deployment recipes](operations.md)
+
 `Help` renders root or nested plain text from immutable metadata. It includes
 usage, arguments, local and inherited options, provenance, aliases, examples,
 deprecations, replacements, related documentation, and deterministic ordering.

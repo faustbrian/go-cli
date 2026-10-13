@@ -1,5 +1,8 @@
 # Release policy
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: Operations and deployment recipes](operations.md)
+
 Releases use root repository tags named `vX.Y.Z`. Maintainers update the
 unreleased changelog, run the complete repository checks from the repository
 root, review API and dependency changes, and create a signed annotated tag.

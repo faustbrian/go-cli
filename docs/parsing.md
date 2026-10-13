@@ -1,5 +1,8 @@
 # Parsing contract
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: Operations and deployment recipes](operations.md)
+
 `Request.Args` is already shell-tokenized argv excluding the executable name.
 `cli` never splits a command string, interpolates variables, expands globs,
 normalizes paths, or invokes a shell.

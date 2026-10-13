@@ -1,5 +1,8 @@
 # Commands and typed input
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: Operations and deployment recipes](operations.md)
+
 Commands have stable names, aliases, summaries, descriptions, examples,
 documentation links, hidden and experimental status, deprecation messages, and
 replacement paths. Child order is registration order. Compiled metadata returns

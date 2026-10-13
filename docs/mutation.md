@@ -1,5 +1,8 @@
 # Mutation testing
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: Operations and deployment recipes](operations.md)
+
 `golib mutation --module .` delegates to the canonical repository runner.
 This is full/release qualification, not an ordinary local or pull-request
 prerequisite. Optional `golib mutation --module . --package .` confines local

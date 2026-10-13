@@ -1,5 +1,8 @@
 # Architecture and lifecycle
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: Operations and deployment recipes](operations.md)
+
 The application composition root creates mutable `Command` definitions and
 calls `Compile` once. Compilation validates names, aliases, layouts, groups,
 inheritance, cycles, reused nodes and bindings, and configured resource limits.

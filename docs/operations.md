@@ -1,5 +1,8 @@
 # Operations and deployment recipes
 
+[Documentation map](index.md) · [Repository README](../README.md)
+[Next: Parser engine decision](architecture/parser-engine.md)
+
 ## ECS one-off task
 
 Build one immutable binary and container image. Supply configuration and
