@@ -7,6 +7,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-15
+
+### Added
+
+- Add `CompileFlagCommand` for flat service commands that need Go's native
+  flag spelling, ordering and help behavior with shared typed configuration,
+  bounded input, private diagnostics and lifecycle. Earlier malformed values
+  cannot be hidden by later help or replacement flags. Normal command and
+  command-set grammars are unchanged.
+
 ### Documentation
 
 - Clarify borrowed callbacks/IO and custom value aliases, cooperative cleanup and

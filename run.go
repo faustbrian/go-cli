@@ -79,20 +79,23 @@ type Result struct {
 }
 
 // Run validates argv and executes synchronously without process-global changes.
-// It recognizes hidden completion tokens; RunCommand does not. Nil contexts or
-// nil/zero applications fail internally. Help/version skip typed conversion and
-// lifecycle, and return signal errors with status zero. Callbacks/panics/blocking
-// IO are not preempted or recovered. Registered cleanup runs only after normal
-// lifecycle return; no goroutine is started to force a cancellation deadline.
+// Normal Compile graphs recognize hidden completion tokens; RunCommand does
+// not. Their help/version requests skip typed conversion and lifecycle, returning
+// signal errors with status zero. CompileFlagCommand instead converts preceding
+// flag occurrences before help and provides no implicit version or completion
+// dispatch. Nil contexts or nil/zero applications fail internally. Callbacks,
+// panics and blocking IO are not preempted or recovered. Registered cleanup runs
+// only after normal lifecycle return; no goroutine forces a cancellation deadline.
 func (application *Application) Run(ctx context.Context, request Request) Result {
 	result := application.run(ctx, request)
 	return application.withExitCode(result)
 }
 
 // RunCommand parses and executes a normal command invocation without
-// recognizing the hidden shell-completion protocol. Help and version requests
-// remain available. Service processes that do not publish shell completion can
-// use this narrower runtime surface.
+// recognizing the hidden shell-completion protocol. Normal Compile graphs retain
+// help and version requests. CompileFlagCommand retains native help ordering
+// without implicit version flags. Service processes that do not publish shell
+// completion can use this narrower runtime surface.
 func (application *Application) RunCommand(
 	ctx context.Context,
 	request Request,
@@ -147,7 +150,7 @@ func (application *Application) run(ctx context.Context, request Request) Result
 	default:
 		return finalizeUnselected(streams, request.Output, application.root, output, err)
 	}
-	if len(request.Args) > 0 {
+	if !application.flagSetParsing && len(request.Args) > 0 {
 		switch request.Args[0] {
 		case "__complete":
 			return application.runCompletionBoundary(ctx, request.Args[1:], false, streams)
@@ -231,7 +234,7 @@ func (application *Application) runParsed(
 	streams IO,
 	output *Output,
 ) Result {
-	parsed, err := engine.Parse(ctx, engineCommand(application.root), request.Args)
+	parsed, converted, err := application.parseInput(ctx, request.Args)
 	switch err {
 	case nil:
 	default:
@@ -243,6 +246,9 @@ func (application *Application) runParsed(
 			return finalizeUnselected(
 				streams, request.Output, application.root, output, contextErr,
 			)
+		}
+		if _, classified := errors.AsType[*Error](err); classified {
+			return finalizeUnselected(streams, request.Output, application.root, output, err)
 		}
 		kind := classifyParseFailure(err)
 		return finalizeUnselected(streams, request.Output, application.root, output, newClassifiedError(
@@ -280,7 +286,7 @@ func (application *Application) runParsed(
 		}
 		return finalizeSignal(streams, request.Output, selected, output, ErrorKindVersion)
 	}
-	input, err := resolveInput(selected, parsed)
+	input, err := resolveConvertedInput(selected, parsed, converted)
 	switch err {
 	case nil:
 	default:
@@ -695,14 +701,24 @@ func joinFailures(primary, secondary error) error {
 }
 
 func resolveInput(command *compiledCommand, parsed engine.Result) (Input, error) {
+	return resolveConvertedInput(command, parsed, nil)
+}
+
+// resolveConvertedInput reuses native flag conversions while retaining the
+// common default, presence, required-value and option-group contracts.
+func resolveConvertedInput(command *compiledCommand, parsed engine.Result, converted map[int]any) (Input, error) {
 	values := make(map[any]resolvedValue)
 	for _, option := range command.effective {
 		raw := parsed.Options[option.key]
 		switch {
 		case len(raw) > 0:
-			value, err := option.parse(raw)
-			if err != nil {
-				return Input{}, invalidValue("option --"+option.name, option.secret, err)
+			value, found := converted[option.key]
+			if !found {
+				var err error
+				value, err = option.parse(raw)
+				if err != nil {
+					return Input{}, invalidValue("option --"+option.name, option.secret, err)
+				}
 			}
 			values[option.binding] = resolvedValue{value: value, state: ValueExplicit}
 		case option.hasDefault:

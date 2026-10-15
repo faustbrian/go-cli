@@ -13,7 +13,7 @@ import (
 )
 
 // FuzzRunArgv splits at NUL into hostile argv under a 1-MiB fixture cap;
-// the fixed graph checks portable exit status, not successful command execution.
+// the fixed graphs check portable exit status, not successful command execution.
 func FuzzRunArgv(f *testing.F) {
 	for _, seed := range [][]byte{
 		{},
@@ -21,30 +21,42 @@ func FuzzRunArgv(f *testing.F) {
 		[]byte("deploy\x00--\x00--literal"),
 		{0xff, 0x00, '-', 'x'},
 		[]byte("__complete\x00de"),
+		[]byte("deploy\x00-force\x00target"),
+		[]byte("deploy\x00-help=false"),
+		[]byte("-force"),
+		[]byte("-listen\x00value"),
+		[]byte("-force=invalid\x00--help"),
 	} {
 		f.Add(seed)
 	}
 	force := cli.BoolOption("force").Short('f')
 	target := cli.StringArgument("target")
-	application, err := cli.Compile(cli.NewCommand(
+	root := cli.NewCommand(
 		"tool",
 		cli.WithSubcommands(cli.NewCommand(
 			"deploy",
 			cli.WithOptions(force),
 			cli.WithArguments(target),
 		)),
-	))
+	)
+	application, err := cli.Compile(root)
 	if err != nil {
 		f.Fatalf("compile fuzz application: %v", err)
+	}
+	flags, err := cli.CompileFlagCommand(cli.NewCommand("tool", cli.WithOptions(cli.BoolOption("force"), cli.StringOption("listen"))))
+	if err != nil {
+		f.Fatalf("compile flag fuzz application: %v", err)
 	}
 	f.Fuzz(func(t *testing.T, encoded []byte) {
 		if len(encoded) > 1<<20 {
 			t.Skip()
 		}
 		parts := strings.Split(string(encoded), "\x00")
-		result := application.Run(context.Background(), cli.Request{Args: parts})
-		if result.ExitCode < 0 || result.ExitCode > 255 {
-			t.Fatalf("non-portable exit code %d", result.ExitCode)
+		for _, candidate := range []*cli.Application{application, flags} {
+			result := candidate.Run(context.Background(), cli.Request{Args: parts})
+			if result.ExitCode < 0 || result.ExitCode > 255 {
+				t.Fatalf("non-portable exit code %d", result.ExitCode)
+			}
 		}
 	})
 }
