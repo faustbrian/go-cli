@@ -21,11 +21,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   now follow the canonical grammar: `--` ends option parsing, stray tokens
   are usage errors, and help is honoured after a stray argument. The error
   kind changes for several argument shapes; exit codes change only where
-  `--` or `--help` now succeed. See the v1 to v2 tables in
+  `--` or `--help` now succeed and, for former `CompileFlagCommand`
+  commands, where `-help` and `--help=x` spellings are now unknown options. See the v1 to v2 tables in
   `docs/migrations.md`.
 - Former `CompileFlagCommand` commands parse through the canonical grammar:
-  only the last value of a repeated option is converted, `-h` always requests
-  help, and a single-dash long name is a shorthand cluster.
+  only the last value of a repeated scalar or `TypedOption` option is
+  converted, `-h` always requests help, `-help`, `-help=x`, `--help=x` and
+  `-h=x` are unknown options instead of help, and a single-dash long name is
+  a shorthand cluster.
 
 ### Security
 

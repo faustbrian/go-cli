@@ -95,6 +95,8 @@ func TestCommandSetUsesEngineGrammarWithoutOptions(t *testing.T) {
 		{args: []string{"--", "deploy"}, wantErr: cli.ErrUnknownCommand, wantCode: 2},
 		{args: []string{"deploy", "-5"}, wantErr: cli.ErrUsage, wantCode: 2},
 		{args: []string{"deploy", "-"}, wantErr: cli.ErrUsage, wantCode: 2},
+		{args: []string{"deploy", "-", "--help"}, wantErr: cli.ErrHelp},
+		{args: []string{"deploy", "-5", "--help"}, wantErr: cli.ErrHelp},
 		{args: []string{"deploy", "--", "x"}, wantErr: cli.ErrUsage, wantCode: 2},
 		{args: []string{"deploy", "extra"}, wantErr: cli.ErrUsage, wantCode: 2},
 		{args: []string{"deploy", "extra", "--help"}, wantErr: cli.ErrHelp},
@@ -128,6 +130,8 @@ func TestCommandSetUsesEngineGrammarWithoutOptions(t *testing.T) {
 			{args: []string{"-"}, wantErr: cli.ErrUsage, wantCode: 2},
 			{args: []string{"-5"}, wantErr: cli.ErrUsage, wantCode: 2},
 			{args: []string{"--", "x"}, wantErr: cli.ErrUsage, wantCode: 2},
+			{args: []string{"foo", "--help"}, wantErr: cli.ErrHelp},
+			{args: []string{"version", "--help"}, wantErr: cli.ErrHelp},
 		} {
 			result := rootOnly.RunCommand(t.Context(), cli.Request{Args: test.args})
 			if test.wantErr == nil && result.Err != nil || test.wantErr != nil && !errors.Is(result.Err, test.wantErr) ||
@@ -170,16 +174,21 @@ func TestCanonicalCommandReplacesFlagCommandGrammar(t *testing.T) {
 		ran     bool
 		count   int64
 		h       string
+		code    int
 	}{
 		{args: []string{"--count=bad", "--count=1"}, ran: true, count: 1},
 		{args: []string{"extra", "--help"}, wantErr: cli.ErrHelp},
 		{args: []string{"-h", "opaque"}, wantErr: cli.ErrHelp},
 		{args: []string{"--h", "opaque"}, ran: true, h: "opaque"},
+		{args: []string{"-help"}, wantErr: cli.ErrUnknownOption, code: 2},
+		{args: []string{"-help=false"}, wantErr: cli.ErrUnknownOption, code: 2},
+		{args: []string{"--help=false"}, wantErr: cli.ErrUnknownOption, code: 2},
+		{args: []string{"-h=false"}, wantErr: cli.ErrUnknownOption, code: 2},
 	} {
 		ran, gotCount, gotH = false, 0, ""
 		result := application.Run(t.Context(), cli.Request{Args: test.args})
 		if test.wantErr == nil && result.Err != nil || test.wantErr != nil && !errors.Is(result.Err, test.wantErr) ||
-			result.ExitCode != 0 || ran != test.ran || gotCount != test.count || gotH != test.h {
+			result.ExitCode != test.code || ran != test.ran || gotCount != test.count || gotH != test.h {
 			t.Fatalf("%q: err %v exit %d ran %t count %d h %q", test.args, result.Err, result.ExitCode, ran, gotCount, gotH)
 		}
 	}

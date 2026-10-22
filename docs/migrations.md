@@ -13,9 +13,10 @@ retaining it beside the canonical engine:
 
   | Arguments | v1 | v2 |
   |---|---|---|
-  | `-name value` | sets `name` | shorthand cluster: `-n` with value `ame` when `n` is a shorthand |
+  | `-name value` | sets `name` | unknown option, exit 2 (a shorthand cluster when matching shorthands exist) |
   | `-h value` with an option named `h` | sets `h` | help, exit 0; spell it `--h` |
-  | `--count=bad --count=1` | malformed value, exit 2 | last value wins; earlier values are not converted |
+  | `-help`, `-help=x`, `--help=x`, `-h=x` | help, exit 0 | unknown option, exit 2; use `--help` or `-h` |
+  | `--count=bad --count=1` for a scalar or `TypedOption` option | malformed value, exit 2 | last value wins; earlier values are not converted |
   | `extra --help` | usage, exit 2 | help, exit 0 |
   | unknown option | `ErrUsage`, exit 2 | `ErrUnknownOption`, exit 2 |
   | option without a value | `ErrUsage`, exit 2 | `ErrMissingValue`, exit 2 |
@@ -30,7 +31,7 @@ retaining it beside the canonical engine:
   |---|---|---|
   | `tool <command> --` | unknown option, exit 2 | runs the command |
   | `tool --` | unknown option, exit 2 | no command runs, exit 0 |
-  | `tool <command> extra --help` | usage, exit 2 | help, exit 0 |
+  | `tool <command> <stray> --help`, including a stray `-` or `-5` | usage or unknown option, exit 2 | help, exit 0 |
   | `tool -`, `tool -5`, `tool -- <command>` | unknown option, exit 2 | unknown command, exit 2 |
   | `tool <command> -`, `tool <command> -5`, `tool <command> -- x` | unknown option, exit 2 | usage, exit 2 |
   | `tool <command> extra --unknown` | usage, exit 2 | unknown option, exit 2 |
@@ -40,6 +41,7 @@ retaining it beside the canonical engine:
   | Arguments | v1 | v2 |
   |---|---|---|
   | `tool --` | unknown option, exit 2 | exit 0 |
+  | `tool <token> --help` | unknown command or option, exit 2; `version --help` rendered the version | help, exit 0 |
   | `tool -`, `tool -5`, `tool -- x` | unknown option, exit 2 | usage, exit 2 |
   | `tool foo` | unknown command, exit 2 | usage, exit 2 |
   | `tool version` with a version | version, exit 0 | usage, exit 2; use `--version` |
