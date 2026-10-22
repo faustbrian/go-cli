@@ -34,10 +34,12 @@ retaining it beside the canonical engine:
   5. `Run` answers `__complete` and `__completeNoDesc` (exit 0); v1 reported
      `ErrUsage`. `RunCommand` does not answer completion.
   6. Only the last value of a repeated scalar or `TypedOption` option is
-     converted, and later tokens decide the outcome after an earlier
+     converted. A later value of the same option, `--help`, `--version`, an
+     unknown option or a missing value takes precedence over an earlier
      malformed value: `--count=bad --count=1` runs, `--count=bad --help`
-     renders help and `--count=bad --name` reports a missing value. v1
-     reported the malformed value. Help, version and parse failures convert
+     renders help and `--count=bad --name` reports a missing value, where v1
+     reported the malformed value. Otherwise the malformed value is still
+     reported. Help, version and parse failures convert
      no values, so custom `TypedOption` parsers do not run for them.
   7. A negative-number-shaped token (`-` followed by a digit, or `-.` followed
      by a digit, such as `-5` or `-.5`) is a positional argument instead of an
@@ -51,8 +53,8 @@ retaining it beside the canonical engine:
 
 - Command sets whose commands declare no options, including sets with no
   commands, now use the same parser as every other command. v1 stopped at the
-  first token that was not a known command: one starting with `-` was an
-  unknown option, any other word an unknown command, and a second argument
+  first token that was not a known command or a help or version request: one
+  starting with `-` was an unknown option, any other word an unknown command, and a second argument
   after a command a usage error. Later tokens were never read. In v2:
 
   1. Before a command, `tool --` exits 0 without running anything, and `-`,
