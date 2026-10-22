@@ -9,46 +9,56 @@ Version 2 keeps one parser and removes the compatibility grammar instead of
 retaining it beside the canonical engine:
 
 - `CompileFlagCommand` is removed. Define the command with `NewCommand` and
-  `Compile`, and spell long options with two dashes. Observable differences:
+  `Compile`. v1 parsed these commands with Go's `flag` package; v2 uses the
+  canonical grammar for both `Run` and `RunCommand`. These rules are the
+  complete set of differences:
 
-  | Arguments | v1 | v2 |
-  |---|---|---|
-  | `-name value` | sets `name` | unknown option, exit 2 (a shorthand cluster when matching shorthands exist) |
-  | `-h value` with an option named `h` | sets `h` | help, exit 0; spell it `--h` |
-  | `-help`, `-help=x`, `--help=x`, `-h=x` | help, exit 0 | unknown option, exit 2; use `--help` or `-h` |
-  | `--count=bad --count=1` for a scalar or `TypedOption` option | malformed value, exit 2 | last value wins; earlier values are not converted |
-  | `extra --help` | usage, exit 2 | help, exit 0 |
-  | unknown option | `ErrUsage`, exit 2 | `ErrUnknownOption`, exit 2 |
-  | option without a value | `ErrUsage`, exit 2 | `ErrMissingValue`, exit 2 |
+  1. A single-dash long name is not a long option: `-name`, `-name=x`,
+     `-verbose`, `-help`, `-help=x`, `-h=x` and `-version` are unknown
+     options (exit 2) unless they form a valid shorthand cluster. In v1 they
+     set the option or requested help. Spell long options with two dashes.
+  2. Only `--help` and `-h` request help. `--h`, `--h=x` and `--help=x` are
+     unknown options (exit 2) without an option named `h`; v1 rendered help.
+     With an option named `h`, `-h value` renders help; spell it `--h value`.
+  3. Options are parsed after positional arguments until `--`. v1 stopped at
+     the first positional, so `extra --help` now renders help (exit 0 instead
+     of 2) and `extra --count=bad` and `extra --name` report a malformed or
+     missing value instead of `ErrUsage`.
+  4. `--version` renders the version (exit 0) when a version is set; v1
+     reported `ErrUsage` (exit 2).
+  5. `Run` answers `__complete` (exit 0); v1 reported `ErrUsage`.
+     `RunCommand` does not answer completion.
+  6. Only the last value of a repeated scalar or `TypedOption` option is
+     converted, and later tokens decide the outcome after an earlier
+     malformed value: `--count=bad --count=1` runs, `--count=bad --help`
+     renders help and `--count=bad --name` reports a missing value. v1
+     reported the malformed value.
+  7. A negative number such as `-5` is a positional argument (a usage error
+     unless help or version follows) instead of an unknown flag.
+  8. Unknown options report `ErrUnknownOption` and options without a value
+     report `ErrMissingValue` instead of `ErrUsage`; both still exit 2.
 
-  `--help` renders help even after an earlier malformed value, and `Run` also
-  answers `__complete` and, when a version is set, `--version`.
 - Command sets whose commands declare no options, including sets with no
-  commands, now use the same parser as every other command. In a set with
-  commands:
+  commands, now use the same parser as every other command. v1 stopped at the
+  first token that was not a known command: one starting with `-` was an
+  unknown option, any other word an unknown command, and a second argument
+  after a command a usage error. Later tokens were never read. In v2:
 
-  | Arguments | v1 | v2 |
-  |---|---|---|
-  | `tool <command> --` | unknown option, exit 2 | runs the command |
-  | `tool --` | unknown option, exit 2 | no command runs, exit 0 |
-  | `tool <command> <stray> --help`, including a stray `-` or `-5` | usage or unknown option, exit 2 | help, exit 0 |
-  | `tool -`, `tool -5`, `tool -- <command>` | unknown option, exit 2 | unknown command, exit 2 |
-  | `tool <command> -`, `tool <command> -5`, `tool <command> -- x` | unknown option, exit 2 | usage, exit 2 |
-  | `tool <command> extra --unknown` | usage, exit 2 | unknown option, exit 2 |
-
-  In a set with no commands:
-
-  | Arguments | v1 | v2 |
-  |---|---|---|
-  | `tool --` | unknown option, exit 2 | exit 0 |
-  | `tool <token> --help` | unknown command or option, exit 2; `version --help` rendered the version | help, exit 0 |
-  | `tool -`, `tool -5`, `tool -- x` | unknown option, exit 2 | usage, exit 2 |
-  | `tool foo` | unknown command, exit 2 | usage, exit 2 |
-  | `tool version` with a version | version, exit 0 | usage, exit 2; use `--version` |
-  | `tool version` without a version | unknown command, exit 2 | usage, exit 2 |
-
-  An unknown option no longer reports a selected command in
-  `Result.Command`.
+  1. Before a command, `tool --` exits 0 without running anything, and `-`,
+     `-5` or a word after `--` is an unknown command (exit 2).
+  2. After a command, and anywhere in a set with no commands, tokens are read
+     left to right until `--`. The first `--help` or `-h` renders help
+     (exit 0); the first `--version` renders the version (exit 0) in a set
+     with no commands that has a version and is otherwise an unknown option;
+     the first unknown option, including `-help`, reports an unknown option
+     (exit 2). Only when none of these appears do leftover arguments (a word,
+     `-`, `-5`, or anything after `--`) report a usage error (exit 2); with no
+     leftovers the command runs, so `tool <command> --` runs the command.
+  3. `version` is a command only in a set with commands. In a set with no
+     commands `tool version` is a usage error (v1 rendered the version, or
+     reported an unknown command without one); use `--version`.
+  4. An unknown option no longer reports a selected command in
+     `Result.Command`.
 
 Replace `github.com/faustbrian/go-cli` imports with
 `github.com/faustbrian/go-cli/v2`. Libraries that expose go-cli types, such as
