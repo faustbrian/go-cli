@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/faustbrian/go-cli/internal/engine"
+	"github.com/faustbrian/go-cli/v2/internal/engine"
 )
 
 func TestErrorAndExitContractsCoverNilAndEveryClassification(t *testing.T) {
@@ -413,7 +413,7 @@ func TestResolutionSuggestionAndContextInternals(t *testing.T) {
 	if contextErrorWithCause(context.Background()) != nil {
 		t.Fatal("background context has a cause")
 	}
-	if !errors.Is(classifyContextError(context.DeadlineExceeded), ErrDeadline) {
+	if !errors.Is(classifyContextErrorWithProtection(context.DeadlineExceeded, false), ErrDeadline) {
 		t.Fatal("deadline was not classified")
 	}
 	values := []any{[]string{"one"}, map[string]string{"one": "1"}, 1}

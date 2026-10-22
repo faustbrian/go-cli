@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/faustbrian/go-cli/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/faustbrian/go-cli/actions/workflows/ci.yml)
 [![Documentation](https://img.shields.io/badge/docs-adoption_and_API-blue)](docs/index.md)
-[![Go Reference](https://pkg.go.dev/badge/github.com/faustbrian/go-cli.svg)](https://pkg.go.dev/github.com/faustbrian/go-cli)
+[![Go Reference](https://pkg.go.dev/badge/github.com/faustbrian/go-cli/v2.svg)](https://pkg.go.dev/github.com/faustbrian/go-cli/v2)
 [![Release](https://img.shields.io/github/v/release/faustbrian/go-cli?sort=semver)](https://github.com/faustbrian/go-cli/releases)
 [![Go](https://img.shields.io/badge/go-1.27.0-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -29,9 +29,11 @@ tighten hostile-input behavior.
 
 ## Adoption entry points
 
-The root module is `github.com/faustbrian/go-cli` (stable).
-It requires Go 1.27.0. Pin the published `v1.1.2` root tag
-with `go get github.com/faustbrian/go-cli@v1.1.2`.
+The root module is `github.com/faustbrian/go-cli/v2` (stable).
+It requires Go 1.27.0; build with Go 1.27.3 or newer, which fixes GO-2026-6809
+in `crypto/x509`. Pin the `v2.0.0` root tag with
+`go get github.com/faustbrian/go-cli/v2@v2.0.0`; see
+[migrating from v1](docs/migrations.md#go-cli-v1-to-v2).
 Install only the modules your application imports; nested module status and
 migration boundaries remain documented separately.
 
@@ -41,15 +43,15 @@ examples, operational constraints, and contributor references.
 ## Install
 
 ```sh
-go get github.com/faustbrian/go-cli@v1
+go get github.com/faustbrian/go-cli/v2@v2
 ```
 
 ## Package map
 
 | Package | Use it for |
 | --- | --- |
-| [`github.com/faustbrian/go-cli`](https://pkg.go.dev/github.com/faustbrian/go-cli) | Defining typed command graphs, compiling immutable applications, and running caller-bounded invocations. |
-| [`github.com/faustbrian/go-cli/clitest`](https://pkg.go.dev/github.com/faustbrian/go-cli/clitest) | Exercising compiled commands in tests with invocation-local arguments, context, and streams. |
+| [`github.com/faustbrian/go-cli/v2`](https://pkg.go.dev/github.com/faustbrian/go-cli/v2) | Defining typed command graphs, compiling immutable applications, and running caller-bounded invocations. |
+| [`github.com/faustbrian/go-cli/v2/clitest`](https://pkg.go.dev/github.com/faustbrian/go-cli/v2/clitest) | Exercising compiled commands in tests with invocation-local arguments, context, and streams. |
 
 The commands under `cmd/` and packages under `internal/` are repository tools,
 not consumer APIs. The `benchmarks` module is an engineering-only harness.
@@ -64,7 +66,7 @@ import (
 	"context"
 	"os"
 
-	cli "github.com/faustbrian/go-cli"
+	cli "github.com/faustbrian/go-cli/v2"
 )
 
 func run(ctx context.Context, argv []string) int {

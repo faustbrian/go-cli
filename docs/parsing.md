@@ -13,23 +13,10 @@ option parsing. Options may appear before or after positionals. Repeated scalar
 options use the last occurrence; slices append. An assigned empty value is
 explicit.
 
-`CompileFlagCommand` is a separate, flat service-command surface backed by
-Go's native `flag.FlagSet`. It preserves one- and two-dash names, bare booleans,
-assigned values, first-positional termination and native help ordering without
-an application-local argv rewriting layer. Typed conversion runs once per
-occurrence, so an earlier malformed value is not hidden by later help or a
-valid replacement. Scalar values retain their last successful occurrence.
-Native diagnostics are discarded: unknown/missing flags and positional input
-return categorical `ErrUsage`; conversion failures retain `ErrMalformedValue`
-and secret protection. A registered long `h` name takes precedence over native
-help recognition, as it does in `flag.FlagSet`.
-
-This surface rejects children, positional definitions and shorthands at
-construction. Normal argv bounds, typed defaults, validations, lifecycle and
-IO remain shared. Generated help uses canonical double-dash names rather than
-native flag diagnostics. Both `Run` and `RunCommand` use this native grammar
-without hidden completion dispatch or implicit version flags. `Compile` and
-`CompileCommandSet` retain their normal grammar, described below.
+`Compile` and `CompileCommandSet` share this one grammar, including command
+sets whose commands declare no options. A single-dash long name such as
+`-listen=x` is a shorthand cluster, so it fails as an unknown option unless
+matching shorthands exist.
 
 Negative numeric positional tokens are protected from shorthand parsing and
 restored byte-for-byte before typed conversion. Negative option values are

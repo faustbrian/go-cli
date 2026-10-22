@@ -3,6 +3,26 @@
 [Documentation map](index.md) · [Repository README](../README.md)
 [Next: Parser engine decision](architecture/parser-engine.md)
 
+## go-cli v1 to v2
+
+Version 2 keeps one parser and removes the compatibility grammar instead of
+retaining it beside the canonical engine:
+
+- `CompileFlagCommand` is removed. Define the command with `NewCommand` and
+  `Compile`, and spell long options with two dashes; single-dash long names are
+  shorthand clusters in the canonical grammar.
+- Command sets whose commands declare no options now use the same parser as
+  every other command. `--` ends option parsing instead of being an unknown
+  option, a bare `-` is an unknown command instead of an unknown option, and an
+  unknown option no longer reports a selected command in `Result.Command`.
+  Exit codes for these cases are unchanged except that `tool --` and
+  `tool <command> --` now run the selected command.
+
+Replace `github.com/faustbrian/go-cli` imports with
+`github.com/faustbrian/go-cli/v2`. Libraries that expose go-cli types, such as
+go-service, need a release on v2 before their consumers can adopt it. Generated
+output schema identifiers (`go-cli/v1`, `go-cli/manifest/v1`) are unchanged.
+
 ## Cobra
 
 Replace exported `*cobra.Command` construction with `NewCommand`, typed binding

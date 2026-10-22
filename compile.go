@@ -11,11 +11,10 @@ import (
 // application-owned: synchronize shared mutable state. Construct with Compile;
 // nil/zero applications yield internal errors on execution and generation.
 type Application struct {
-	root           *compiledCommand
-	commands       map[int]*compiledCommand
-	limits         Limits
-	exitCodes      ExitCodePolicy
-	flagSetParsing bool
+	root      *compiledCommand
+	commands  map[int]*compiledCommand
+	limits    Limits
+	exitCodes ExitCodePolicy
 }
 
 // Limits bounds construction metadata and argv/candidate processing. Zero

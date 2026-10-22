@@ -3,7 +3,7 @@ set -euo pipefail
 
 modules="$(GOWORK=off go list -m all | awk '{print $1}' | sort)"
 expected="$(printf '%s\n' \
-  github.com/faustbrian/go-cli | sort)"
+  github.com/faustbrian/go-cli/v2 | sort)"
 
 if [[ "${modules}" != "${expected}" ]]; then
   echo "core dependency boundary changed:" >&2

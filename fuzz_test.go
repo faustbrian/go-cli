@@ -9,7 +9,7 @@ import (
 	"testing"
 	"unicode"
 
-	cli "github.com/faustbrian/go-cli"
+	cli "github.com/faustbrian/go-cli/v2"
 )
 
 // FuzzRunArgv splits at NUL into hostile argv under a 1-MiB fixture cap;
@@ -43,17 +43,22 @@ func FuzzRunArgv(f *testing.F) {
 	if err != nil {
 		f.Fatalf("compile fuzz application: %v", err)
 	}
-	flags, err := cli.CompileFlagCommand(cli.NewCommand("tool", cli.WithOptions(cli.BoolOption("force"), cli.StringOption("listen"))))
+	set, err := cli.CompileCommandSet(cli.CommandSet{Name: "tool", Version: "1.0.0", Commands: []cli.CommandSpec{
+		{Name: "deploy", Handler: func(context.Context, cli.Invocation) error { return nil }},
+		{Name: "serve", Options: []cli.OptionDefinition{cli.StringOption("listen")}, Handler: func(context.Context, cli.Invocation) error { return nil }},
+	}})
 	if err != nil {
-		f.Fatalf("compile flag fuzz application: %v", err)
+		f.Fatalf("compile command-set fuzz application: %v", err)
 	}
 	f.Fuzz(func(t *testing.T, encoded []byte) {
 		if len(encoded) > 1<<20 {
 			t.Skip()
 		}
 		parts := strings.Split(string(encoded), "\x00")
-		for _, candidate := range []*cli.Application{application, flags} {
-			result := candidate.Run(context.Background(), cli.Request{Args: parts})
+		for _, result := range []cli.Result{
+			application.Run(context.Background(), cli.Request{Args: parts}),
+			set.RunCommand(context.Background(), cli.Request{Args: parts}),
+		} {
 			if result.ExitCode < 0 || result.ExitCode > 255 {
 				t.Fatalf("non-portable exit code %d", result.ExitCode)
 			}

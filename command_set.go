@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/faustbrian/go-cli/internal/engine"
+	"github.com/faustbrian/go-cli/v2/internal/engine"
 )
 
 // CommandSet declares a bounded root command with direct executable children.
@@ -37,10 +37,9 @@ type CommandSpec struct {
 // caller callbacks, custom defaults or streams. Construct with CompileCommandSet;
 // nil/zero values yield an internal execution error.
 type CommandSetApplication struct {
-	root       *compiledCommand
-	limits     Limits
-	exitCodes  ExitCodePolicy
-	hasOptions bool
+	root      *compiledCommand
+	limits    Limits
+	exitCodes ExitCodePolicy
 }
 
 // CompileCommandSet snapshots root/direct-child metadata and validates shared
@@ -88,7 +87,6 @@ func CompileCommandSet(
 		limits:   configuration.limits,
 		metadata: metadataBytes,
 	}
-	hasOptions := false
 	names := make(map[string]struct{}, len(set.Commands))
 	for index, spec := range set.Commands {
 		if err := validateName("command name", spec.Name); err != nil {
@@ -121,9 +119,6 @@ func CompileCommandSet(
 			return nil, err
 		}
 		metadataBytes = state.metadata
-		if len(options) > 0 {
-			hasOptions = true
-		}
 		command := &compiledCommand{
 			id:          index + 1,
 			name:        spec.Name,
@@ -138,10 +133,9 @@ func CompileCommandSet(
 	}
 
 	return &CommandSetApplication{
-		root:       root,
-		limits:     configuration.limits,
-		exitCodes:  configuration.exitCodes,
-		hasOptions: hasOptions,
+		root:      root,
+		limits:    configuration.limits,
+		exitCodes: configuration.exitCodes,
 	}, nil
 }
 
@@ -203,14 +197,8 @@ func (application *CommandSetApplication) RunCommand(
 			err,
 		))
 	}
-	if application.hasOptions {
-		return application.withExitCode(
-			application.runParsed(ctx, request, streams, output),
-		)
-	}
-
 	return application.withExitCode(
-		application.runCommand(ctx, request, streams, output),
+		application.runParsed(ctx, request, streams, output),
 	)
 }
 
@@ -280,101 +268,6 @@ func (application *CommandSetApplication) withExitCode(result Result) Result {
 	}
 
 	return result
-}
-
-func (application *CommandSetApplication) runCommand(
-	ctx context.Context,
-	request Request,
-	streams IO,
-	output *Output,
-) Result {
-	selected := application.root
-	if len(request.Args) == 0 {
-		return executeCommandSetHandler(
-			ctx,
-			request,
-			streams,
-			output,
-			selected,
-			Input{values: map[any]resolvedValue{}},
-		)
-	}
-
-	first := request.Args[0]
-	switch {
-	case first == "--help" || first == "-h":
-		return application.help(request, streams, output, selected)
-	case application.root.version != "" &&
-		(first == "--version" || first == "version"):
-		if err := output.SetData(
-			application.root.name + " " + application.root.version,
-		); err != nil {
-			return finalize(streams, request.Output, selected, output, err)
-		}
-
-		return finalizeSignal(
-			streams,
-			request.Output,
-			selected,
-			output,
-			ErrorKindVersion,
-		)
-	case strings.HasPrefix(first, "-"):
-		return commandSetUnknownOption(request, streams, output, selected)
-	}
-
-	selected = commandSetChild(application.root, first)
-	if selected == nil {
-		message := "unknown command " + safeToken(first)
-		if suggestion := suggestCommand(application.root, first); suggestion != "" {
-			message += "; did you mean " + safeToken(suggestion) + "?"
-		}
-
-		return finalize(streams, request.Output, application.root, output,
-			newClassifiedError(
-				ErrorKindUnknownCommand,
-				message,
-				nil,
-				false,
-			),
-		)
-	}
-	for _, token := range request.Args[1:] {
-		switch {
-		case token == "--help" || token == "-h":
-			return application.help(request, streams, output, selected)
-		case strings.HasPrefix(token, "-"):
-			return commandSetUnknownOption(request, streams, output, selected)
-		default:
-			return finalize(streams, request.Output, selected, output,
-				newClassifiedError(
-					ErrorKindUsage,
-					"unexpected positional argument "+safeToken(token),
-					nil,
-					false,
-				),
-			)
-		}
-	}
-
-	return executeCommandSetHandler(
-		ctx,
-		request,
-		streams,
-		output,
-		selected,
-		Input{values: map[any]resolvedValue{}},
-	)
-}
-
-func commandSetChild(root *compiledCommand, name string) *compiledCommand {
-	for _, child := range root.children {
-		if child.name == name {
-			return child
-		}
-	}
-
-	return nil
 }
 
 func (application *CommandSetApplication) help(
@@ -451,22 +344,6 @@ func commandSetHelpText(
 	}
 
 	return wrapHelp(output.String(), width)
-}
-
-func commandSetUnknownOption(
-	request Request,
-	streams IO,
-	output *Output,
-	command *compiledCommand,
-) Result {
-	return finalize(streams, request.Output, command, output,
-		newClassifiedError(
-			ErrorKindUnknownOption,
-			"invalid command invocation: unknown option",
-			nil,
-			false,
-		),
-	)
 }
 
 func executeCommandSetHandler(

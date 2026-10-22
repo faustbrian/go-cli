@@ -1,18 +1,18 @@
 {
   "schema_version": 2,
   "repository": "github.com/faustbrian/go-cli",
-  "go_version": "1.27.2",
+  "go_version": "1.27.3",
   "modules": [
     {
       "directory": ".",
-      "module_path": "github.com/faustbrian/go-cli",
+      "module_path": "github.com/faustbrian/go-cli/v2",
       "go_version": "1.27.0",
       "packages": [
         {
           "module_directory": ".",
           "directory": ".",
           "name": "cli",
-          "import_path": "github.com/faustbrian/go-cli",
+          "import_path": "github.com/faustbrian/go-cli/v2",
           "kind": "public",
           "production": true,
           "executable": true,
@@ -24,7 +24,7 @@
           "module_directory": ".",
           "directory": "clitest",
           "name": "clitest",
-          "import_path": "github.com/faustbrian/go-cli/clitest",
+          "import_path": "github.com/faustbrian/go-cli/v2/clitest",
           "kind": "test support",
           "production": false,
           "executable": true,
@@ -36,7 +36,7 @@
           "module_directory": ".",
           "directory": "cmd/generate-reference",
           "name": "main",
-          "import_path": "github.com/faustbrian/go-cli/cmd/generate-reference",
+          "import_path": "github.com/faustbrian/go-cli/v2/cmd/generate-reference",
           "kind": "tooling",
           "production": false,
           "executable": true,
@@ -48,7 +48,7 @@
           "module_directory": ".",
           "directory": "cmd/process-fixture",
           "name": "main",
-          "import_path": "github.com/faustbrian/go-cli/cmd/process-fixture",
+          "import_path": "github.com/faustbrian/go-cli/v2/cmd/process-fixture",
           "kind": "tooling",
           "production": false,
           "executable": true,
@@ -60,7 +60,7 @@
           "module_directory": ".",
           "directory": "internal/engine",
           "name": "engine",
-          "import_path": "github.com/faustbrian/go-cli/internal/engine",
+          "import_path": "github.com/faustbrian/go-cli/v2/internal/engine",
           "kind": "internal",
           "production": true,
           "executable": true,
@@ -72,7 +72,7 @@
           "module_directory": ".",
           "directory": "internal/referenceapp",
           "name": "referenceapp",
-          "import_path": "github.com/faustbrian/go-cli/internal/referenceapp",
+          "import_path": "github.com/faustbrian/go-cli/v2/internal/referenceapp",
           "kind": "tooling",
           "production": false,
           "executable": true,
@@ -102,11 +102,11 @@
         ],
         "public_package_identifier": "cli",
         "primary_entry_packages": [
-          "github.com/faustbrian/go-cli"
+          "github.com/faustbrian/go-cli/v2"
         ],
         "package_selection": {
-          "github.com/faustbrian/go-cli": "Use to define typed command graphs, compile immutable applications, run caller-bounded invocations, and render deterministic results.",
-          "github.com/faustbrian/go-cli/clitest": "Use in tests to execute compiled commands without mutating process-global state."
+          "github.com/faustbrian/go-cli/v2": "Use to define typed command graphs, compile immutable applications, run caller-bounded invocations, and render deterministic results.",
+          "github.com/faustbrian/go-cli/v2/clitest": "Use in tests to execute compiled commands without mutating process-global state."
         },
         "lifecycle_status": "active",
         "maturity": "stable",
@@ -131,7 +131,7 @@
         "optional_owned_dependencies": [],
         "adapters": [],
         "companions": [
-          "github.com/faustbrian/go-cli/clitest"
+          "github.com/faustbrian/go-cli/v2/clitest"
         ],
         "supported_go": {
           "minimum": "1.27.0",
@@ -157,7 +157,7 @@
           "examples": "example_test.go",
           "faq": "docs/troubleshooting.md",
           "changelog": "CHANGELOG.md",
-          "pkg_go_dev": "https://pkg.go.dev/github.com/faustbrian/go-cli",
+          "pkg_go_dev": "https://pkg.go.dev/github.com/faustbrian/go-cli/v2",
           "ecosystem_index": "https://github.com/faustbrian/go-library-tools/blob/v1.8.4/docs/ecosystem/README.md"
         },
         "known_good_compatibility_sets": [],
@@ -167,12 +167,12 @@
           "release": "not-started"
         }
       },
-      "version": "1.2.0",
+      "version": "2.0.0",
       "tag_prefix": "v",
       "owned_dependencies": [],
       "reverse_owned_dependencies": [
         "github.com/faustbrian/go-cache",
-        "github.com/faustbrian/go-cli/benchmarks",
+        "github.com/faustbrian/go-cli/v2/benchmarks",
         "github.com/faustbrian/go-config",
         "github.com/faustbrian/go-kafka/adapters/service",
         "github.com/faustbrian/go-kafka/kafkaservice",
@@ -217,7 +217,7 @@
     },
     {
       "directory": "benchmarks",
-      "module_path": "github.com/faustbrian/go-cli/benchmarks",
+      "module_path": "github.com/faustbrian/go-cli/v2/benchmarks",
       "go_version": "1.27.0",
       "packages": [],
       "purpose": "See the module README and goal files.",
@@ -231,7 +231,7 @@
       "version": "unreleased",
       "tag_prefix": "benchmarks/v",
       "owned_dependencies": [
-        "github.com/faustbrian/go-cli"
+        "github.com/faustbrian/go-cli/v2"
       ],
       "reverse_owned_dependencies": [],
       "external_runtime_dependencies": [

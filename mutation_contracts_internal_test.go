@@ -1411,7 +1411,7 @@ func TestFailureResultAndContextCausePreserveExactState(t *testing.T) {
 	cause := errors.New("cancel cause")
 	ctx, cancel := context.WithCancelCause(context.Background())
 	cancel(cause)
-	if err := contextError(ctx); !errors.Is(err, cause) || !errors.Is(err, ErrCanceled) {
-		t.Fatalf("contextError(cause) = %v", err)
+	if err := contextErrorWithProtection(ctx, false); !errors.Is(err, cause) || !errors.Is(err, ErrCanceled) {
+		t.Fatalf("contextErrorWithProtection(cause) = %v", err)
 	}
 }

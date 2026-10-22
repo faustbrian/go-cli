@@ -7,6 +7,24 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Removed
+
+- Remove `CompileFlagCommand` and its native `flag.FlagSet` grammar. Commands
+  use the single canonical parser.
+- Remove the separate token parser for command sets whose commands declare no
+  options; every command set now parses through the canonical engine.
+
+### Changed
+
+- Move the module to `github.com/faustbrian/go-cli/v2`.
+- In option-less command sets, `--` ends option parsing, a bare `-` is an
+  unknown command, and an unknown option leaves `Result.Command` unselected,
+  matching command sets that declare options.
+
+### Security
+
+- Build with Go 1.27.3 to address GO-2026-6809 in `crypto/x509`.
+
 ## [1.2.0] - 2026-10-15
 
 ### Added

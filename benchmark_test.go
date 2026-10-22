@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"testing"
 
-	cli "github.com/faustbrian/go-cli"
+	cli "github.com/faustbrian/go-cli/v2"
 )
 
 // BenchmarkCompileSmallTree builds and compiles four children with three ordinary options
