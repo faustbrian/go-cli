@@ -94,6 +94,7 @@ func TestCommandSetUsesEngineGrammarWithoutOptions(t *testing.T) {
 		{args: []string{"-5"}, wantErr: cli.ErrUnknownCommand, wantCode: 2},
 		{args: []string{"--", "deploy"}, wantErr: cli.ErrUnknownCommand, wantCode: 2},
 		{args: []string{"deploy", "-5"}, wantErr: cli.ErrUsage, wantCode: 2},
+		{args: []string{"deploy", "-"}, wantErr: cli.ErrUsage, wantCode: 2},
 		{args: []string{"deploy", "--", "x"}, wantErr: cli.ErrUsage, wantCode: 2},
 		{args: []string{"deploy", "extra"}, wantErr: cli.ErrUsage, wantCode: 2},
 		{args: []string{"deploy", "extra", "--help"}, wantErr: cli.ErrHelp},
@@ -111,6 +112,30 @@ func TestCommandSetUsesEngineGrammarWithoutOptions(t *testing.T) {
 		}
 	}
 
+	for _, version := range []string{"1.2.3", ""} {
+		rootOnly, err := cli.CompileCommandSet(cli.CommandSet{Name: "tool", Version: version})
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, test := range []struct {
+			args     []string
+			wantErr  error
+			wantCode int
+		}{
+			{args: []string{"--"}},
+			{args: []string{"version"}, wantErr: cli.ErrUsage, wantCode: 2},
+			{args: []string{"foo"}, wantErr: cli.ErrUsage, wantCode: 2},
+			{args: []string{"-"}, wantErr: cli.ErrUsage, wantCode: 2},
+			{args: []string{"-5"}, wantErr: cli.ErrUsage, wantCode: 2},
+			{args: []string{"--", "x"}, wantErr: cli.ErrUsage, wantCode: 2},
+		} {
+			result := rootOnly.RunCommand(t.Context(), cli.Request{Args: test.args})
+			if test.wantErr == nil && result.Err != nil || test.wantErr != nil && !errors.Is(result.Err, test.wantErr) ||
+				result.ExitCode != test.wantCode {
+				t.Fatalf("root-only (version %q) %q: err %v exit %d", version, test.args, result.Err, result.ExitCode)
+			}
+		}
+	}
 	rootOnly, err := cli.CompileCommandSet(cli.CommandSet{Name: "tool", Version: "1.2.3"})
 	if err != nil {
 		t.Fatal(err)
@@ -118,8 +143,45 @@ func TestCommandSetUsesEngineGrammarWithoutOptions(t *testing.T) {
 	if result := rootOnly.RunCommand(t.Context(), cli.Request{Args: []string{"--version"}}); !errors.Is(result.Err, cli.ErrVersion) || result.ExitCode != 0 {
 		t.Fatalf("root-only --version = %v exit %d", result.Err, result.ExitCode)
 	}
-	if result := rootOnly.RunCommand(t.Context(), cli.Request{Args: []string{"version"}}); !errors.Is(result.Err, cli.ErrUsage) || result.ExitCode != 2 {
-		t.Fatalf("root-only version word = %v exit %d", result.Err, result.ExitCode)
+}
+
+// TestCanonicalCommandReplacesFlagCommandGrammar pins how former
+// CompileFlagCommand invocations behave under the canonical grammar.
+func TestCanonicalCommandReplacesFlagCommandGrammar(t *testing.T) {
+	t.Parallel()
+
+	count := cli.IntOption("count")
+	h := cli.StringOption("h")
+	var ran bool
+	var gotCount int64
+	var gotH string
+	application, err := cli.Compile(cli.NewCommand("service", cli.WithOptions(count, h), cli.WithHandler(func(_ context.Context, invocation cli.Invocation) error {
+		ran = true
+		gotCount = count.Get(invocation.Input())
+		gotH = h.Get(invocation.Input())
+		return nil
+	})))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, test := range []struct {
+		args    []string
+		wantErr error
+		ran     bool
+		count   int64
+		h       string
+	}{
+		{args: []string{"--count=bad", "--count=1"}, ran: true, count: 1},
+		{args: []string{"extra", "--help"}, wantErr: cli.ErrHelp},
+		{args: []string{"-h", "opaque"}, wantErr: cli.ErrHelp},
+		{args: []string{"--h", "opaque"}, ran: true, h: "opaque"},
+	} {
+		ran, gotCount, gotH = false, 0, ""
+		result := application.Run(t.Context(), cli.Request{Args: test.args})
+		if test.wantErr == nil && result.Err != nil || test.wantErr != nil && !errors.Is(result.Err, test.wantErr) ||
+			result.ExitCode != 0 || ran != test.ran || gotCount != test.count || gotH != test.h {
+			t.Fatalf("%q: err %v exit %d ran %t count %d h %q", test.args, result.Err, result.ExitCode, ran, gotCount, gotH)
+		}
 	}
 }
 

@@ -9,16 +9,22 @@ Version 2 keeps one parser and removes the compatibility grammar instead of
 retaining it beside the canonical engine:
 
 - `CompileFlagCommand` is removed. Define the command with `NewCommand` and
-  `Compile`, and spell long options with two dashes. A single-dash long name is
-  a shorthand cluster in the canonical grammar, so `-name` can parse as `-n`
-  with the value `ame` when `n` is a shorthand. Unknown options report
-  `ErrUnknownOption` and options without a value report `ErrMissingValue`
-  instead of `ErrUsage`. `--help` renders help even after an earlier malformed
-  value, and `Run` also answers `__complete` and, when a version is set,
-  `--version`.
+  `Compile`, and spell long options with two dashes. Observable differences:
+
+  | Arguments | v1 | v2 |
+  |---|---|---|
+  | `-name value` | sets `name` | shorthand cluster: `-n` with value `ame` when `n` is a shorthand |
+  | `-h value` with an option named `h` | sets `h` | help, exit 0; spell it `--h` |
+  | `--count=bad --count=1` | malformed value, exit 2 | last value wins; earlier values are not converted |
+  | `extra --help` | usage, exit 2 | help, exit 0 |
+  | unknown option | `ErrUsage`, exit 2 | `ErrUnknownOption`, exit 2 |
+  | option without a value | `ErrUsage`, exit 2 | `ErrMissingValue`, exit 2 |
+
+  `--help` renders help even after an earlier malformed value, and `Run` also
+  answers `__complete` and, when a version is set, `--version`.
 - Command sets whose commands declare no options, including sets with no
-  commands, now use the same parser as every other command. Observable
-  differences from v1 in those sets:
+  commands, now use the same parser as every other command. In a set with
+  commands:
 
   | Arguments | v1 | v2 |
   |---|---|---|
@@ -26,13 +32,21 @@ retaining it beside the canonical engine:
   | `tool --` | unknown option, exit 2 | no command runs, exit 0 |
   | `tool <command> extra --help` | usage, exit 2 | help, exit 0 |
   | `tool -`, `tool -5`, `tool -- <command>` | unknown option, exit 2 | unknown command, exit 2 |
-  | `tool <command> -5`, `tool <command> -- x` | unknown option, exit 2 | usage, exit 2 |
+  | `tool <command> -`, `tool <command> -5`, `tool <command> -- x` | unknown option, exit 2 | usage, exit 2 |
   | `tool <command> extra --unknown` | usage, exit 2 | unknown option, exit 2 |
-  | `tool version` with no commands | version, exit 0 | usage, exit 2 |
+
+  In a set with no commands:
+
+  | Arguments | v1 | v2 |
+  |---|---|---|
+  | `tool --` | unknown option, exit 2 | exit 0 |
+  | `tool -`, `tool -5`, `tool -- x` | unknown option, exit 2 | usage, exit 2 |
+  | `tool foo` | unknown command, exit 2 | usage, exit 2 |
+  | `tool version` with a version | version, exit 0 | usage, exit 2; use `--version` |
+  | `tool version` without a version | unknown command, exit 2 | usage, exit 2 |
 
   An unknown option no longer reports a selected command in
-  `Result.Command`. `--version` still renders the version in every set, and
-  `version` remains a command when the set has commands.
+  `Result.Command`.
 
 Replace `github.com/faustbrian/go-cli` imports with
 `github.com/faustbrian/go-cli/v2`. Libraries that expose go-cli types, such as

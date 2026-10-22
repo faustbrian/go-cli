@@ -17,15 +17,15 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Changed
 
 - Move the module to `github.com/faustbrian/go-cli/v2`.
-- Command sets whose commands declare no options now follow the canonical
-  grammar. `--` ends option parsing, so `tool <command> --` runs the command
-  and `tool --` exits 0. `tool <command> extra --help` renders help instead
-  of a usage error. A bare `-`, `-5` or `-- <command>` before a command is an
-  unknown command, and `<command> -5` or `<command> -- x` is a usage error,
-  instead of an unknown option, and `<command> extra --unknown` is an unknown
-  option instead of a usage error. An unknown option leaves `Result.Command`
-  unselected. In a set with no commands, `version` is a usage error; use
-  `--version`.
+- Command sets whose commands declare no options, and sets with no commands,
+  now follow the canonical grammar: `--` ends option parsing, stray tokens
+  are usage errors, and help is honoured after a stray argument. The error
+  kind changes for several argument shapes; exit codes change only where
+  `--` or `--help` now succeed. See the v1 to v2 tables in
+  `docs/migrations.md`.
+- Former `CompileFlagCommand` commands parse through the canonical grammar:
+  only the last value of a repeated option is converted, `-h` always requests
+  help, and a single-dash long name is a shorthand cluster.
 
 ### Security
 
@@ -331,7 +331,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Established a 100% mutation-efficacy and 98.5% mutator-coverage release gate
   with explicit reviewed classifications for unexecuted constant mutations.
 
-[Unreleased]: https://github.com/faustbrian/go-cli/compare/v1.1.2...HEAD
+[Unreleased]: https://github.com/faustbrian/go-cli/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/faustbrian/go-cli/compare/v1.1.2...v1.2.0
 [1.1.2]: https://github.com/faustbrian/go-cli/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/faustbrian/go-cli/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/faustbrian/go-cli/compare/v1.0.1...v1.1.0

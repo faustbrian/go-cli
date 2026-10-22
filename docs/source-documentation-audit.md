@@ -5,6 +5,10 @@
 
 ## Contract and scope
 
+This is a historical record of the audit at `3c744bd` on the v1 line. Its
+baseline paths, toolchain pin, test names and consumer lists describe that
+revision, not the current v2 source.
+
 Tier A source documentation from `3c744bdd6fc6541f2d9c02b498c4d271b54952b3`.
 Worker owns canonical package/API comments and adjacent implementation rationale,
 with only directly contradicted maintained-document corrections. Preserve all
