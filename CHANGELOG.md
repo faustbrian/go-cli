@@ -19,13 +19,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Move the module to `github.com/faustbrian/go-cli/v2`.
 - Command sets whose commands declare no options, and sets with no commands,
   now follow the canonical grammar: `--` ends option parsing, stray tokens
-  are usage errors, and help is honoured after a stray argument. Error kinds
-  and some exit codes change; see the v1 to v2 tables in
+  after a command are usage errors, and help is honoured after a stray
+  argument. Error kinds and some exit codes change; see the v1 to v2 rules in
   `docs/migrations.md`.
 - Former `CompileFlagCommand` commands parse through the canonical grammar.
   Single-dash long names and `--h`/`--help=x` are unknown options, options
-  are parsed after positional arguments, `--version` and `__complete` are
-  answered, the last value of a repeated scalar option wins, and negative
+  are parsed after positional arguments, `--version`, `__complete` and
+  `__completeNoDesc` are answered, usage and malformed-value errors report the
+  command in `Result.Command`, the last value of a repeated scalar option wins, and negative
   numbers are positional arguments. `docs/migrations.md` lists the complete
   rules, including every exit-code change.
 
