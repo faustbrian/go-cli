@@ -16,7 +16,7 @@ root API; follow its own README and migration guidance before composing it.
 | Module | Status | Owner detail |
 | --- | --- | --- |
 | `github.com/faustbrian/go-cli/v2` | stable | [README](../README.md) |
-| `github.com/faustbrian/go-cli/v2/benchmarks` | internal; non-releasable | [README](../benchmarks/README.md) |
+| `github.com/faustbrian/go-cli/benchmarks` | internal; non-releasable | [README](../benchmarks/README.md) |
 
 ## Choose and adopt
 

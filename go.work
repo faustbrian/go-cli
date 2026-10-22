@@ -5,6 +5,3 @@ use (
 	./benchmarks
 )
 
-// The benchmarks module requires the root's v2.0.0 before that tag exists;
-// remove this replacement once v2.0.0 is published.
-replace github.com/faustbrian/go-cli/v2 v2.0.0 => ./

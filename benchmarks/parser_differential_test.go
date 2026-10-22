@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/faustbrian/go-cli/v2/internal/engine"
+	"github.com/faustbrian/go-cli/internal/engine"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )

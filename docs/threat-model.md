@@ -80,5 +80,4 @@ The supported line is v2; v1 is unsupported. Rejecting custom
 structured-output serializers and withholding concrete secret-command callback
 causes are intentional security corrections. Release requires the updated API
 baseline, direct owned-consumer checks, security gates, and publication
-evidence. The only local replacement is the workspace-scoped `go-cli/v2 v2.0.0`
-directive the nested benchmarks module needs before v2.0.0 is published.
+evidence. The repository contains no local replacement directive.
