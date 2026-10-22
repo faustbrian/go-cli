@@ -769,7 +769,9 @@ func resolveInput(command *compiledCommand, parsed engine.Result) (Input, error)
 	if position < len(parsed.Arguments) {
 		if len(command.children) > 0 && len(command.arguments) == 0 {
 			message := "unknown command " + safeToken(parsed.Arguments[position])
-			if suggestion := suggestCommand(command, parsed.Arguments[position]); suggestion != "" {
+			// A token after "--" can equal a command name; suggesting the token
+			// itself would not help the user.
+			if suggestion := suggestCommand(command, parsed.Arguments[position]); suggestion != "" && suggestion != parsed.Arguments[position] {
 				message += "; did you mean " + safeToken(suggestion) + "?"
 			}
 			return Input{}, newClassifiedError(
@@ -832,12 +834,6 @@ func suggestCommand(command *compiledCommand, token string) string {
 	case 1:
 		return ""
 	}
-	// A token after "--" can equal a command name; suggesting the token itself
-	// would not help the user.
-	if suggestion == token {
-		return ""
-	}
-
 	return suggestion
 }
 
