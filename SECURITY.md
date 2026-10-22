@@ -7,11 +7,13 @@ or secret-bearing argv.
 
 | Version | Supported |
 | --- | --- |
-| 1.x | Yes |
+| 2.x | Yes |
+| 1.x | No |
 | < 1.0 | No |
 
-Security fixes are applied to the current v1 line and released from a supported
-v1 revision. A report should identify the affected package, version, input
+Security fixes are applied to the current v2 line and released from a supported
+v2 revision. Users of v1 must migrate through
+[`docs/migrations.md`](docs/migrations.md). A report should identify the affected package, version, input
 boundary, observable impact, minimal reproduction, and any known mitigation
 without including production credentials or private user data.
 

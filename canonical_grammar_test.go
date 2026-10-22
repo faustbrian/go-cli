@@ -80,25 +80,46 @@ func TestCommandSetUsesEngineGrammarWithoutOptions(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, test := range []struct {
-		args     []string
-		wantErr  error
-		wantCode int
-		handled  string
+		args       []string
+		wantErr    error
+		wantCode   int
+		handled    string
+		unselected bool
 	}{
 		{args: []string{"deploy", "--"}, handled: "deploy"},
-		{args: []string{"--unknown"}, wantErr: cli.ErrUnknownOption, wantCode: 2},
-		{args: []string{"deploy", "--unknown"}, wantErr: cli.ErrUnknownOption, wantCode: 2},
+		{args: []string{"--"}},
+		{args: []string{"--unknown"}, wantErr: cli.ErrUnknownOption, wantCode: 2, unselected: true},
+		{args: []string{"deploy", "--unknown"}, wantErr: cli.ErrUnknownOption, wantCode: 2, unselected: true},
 		{args: []string{"-"}, wantErr: cli.ErrUnknownCommand, wantCode: 2},
+		{args: []string{"-5"}, wantErr: cli.ErrUnknownCommand, wantCode: 2},
+		{args: []string{"--", "deploy"}, wantErr: cli.ErrUnknownCommand, wantCode: 2},
+		{args: []string{"deploy", "-5"}, wantErr: cli.ErrUsage, wantCode: 2},
+		{args: []string{"deploy", "--", "x"}, wantErr: cli.ErrUsage, wantCode: 2},
 		{args: []string{"deploy", "extra"}, wantErr: cli.ErrUsage, wantCode: 2},
+		{args: []string{"deploy", "extra", "--help"}, wantErr: cli.ErrHelp},
+		{args: []string{"deploy", "extra", "--unknown"}, wantErr: cli.ErrUnknownOption, wantCode: 2, unselected: true},
 		{args: []string{"--version"}, wantErr: cli.ErrVersion},
+		{args: []string{"version"}, wantErr: cli.ErrVersion},
 		{args: []string{"deploy", "--help"}, wantErr: cli.ErrHelp},
 	} {
 		handled = ""
 		result := application.RunCommand(t.Context(), cli.Request{Args: test.args})
 		if test.wantErr == nil && result.Err != nil || test.wantErr != nil && !errors.Is(result.Err, test.wantErr) ||
-			result.ExitCode != test.wantCode || handled != test.handled {
-			t.Fatalf("%q: err %v exit %d handled %q", test.args, result.Err, result.ExitCode, handled)
+			result.ExitCode != test.wantCode || handled != test.handled ||
+			test.unselected && result.Command.Name() != "" {
+			t.Fatalf("%q: err %v exit %d handled %q command %q", test.args, result.Err, result.ExitCode, handled, result.Command.Name())
 		}
+	}
+
+	rootOnly, err := cli.CompileCommandSet(cli.CommandSet{Name: "tool", Version: "1.2.3"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result := rootOnly.RunCommand(t.Context(), cli.Request{Args: []string{"--version"}}); !errors.Is(result.Err, cli.ErrVersion) || result.ExitCode != 0 {
+		t.Fatalf("root-only --version = %v exit %d", result.Err, result.ExitCode)
+	}
+	if result := rootOnly.RunCommand(t.Context(), cli.Request{Args: []string{"version"}}); !errors.Is(result.Err, cli.ErrUsage) || result.ExitCode != 2 {
+		t.Fatalf("root-only version word = %v exit %d", result.Err, result.ExitCode)
 	}
 }
 

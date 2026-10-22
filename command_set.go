@@ -14,7 +14,8 @@ import (
 type CommandSet struct {
 	// Name is the stable root command token.
 	Name string
-	// Version is the optional version rendered by --version and version.
+	// Version is the optional version rendered by --version, and by the version
+	// command when the set has commands.
 	Version string
 	// Commands are the direct executable children in help order.
 	Commands []CommandSpec

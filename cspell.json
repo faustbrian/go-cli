@@ -16,7 +16,8 @@
     "docs/engineering-inventory.md",
     "docs/goal-traceability.md",
     "docs/module-dependencies.md",
-    "docs/package-catalog.md"
+    "docs/package-catalog.md",
+    "docs/source-documentation-audit.md"
   ],
   "ignoreRegExpList": [
     "/`[^`\\n]+`/g",

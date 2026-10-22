@@ -50,6 +50,7 @@ root API; follow its own README and migration guidance before composing it.
 - [Benchmark evidence: 2026-09-05 Darwin arm64](benchmarks/2026-09-05-darwin-arm64.md).
 - [Performance](performance.md).
 - [Release policy](release.md).
+- [Source documentation audit](source-documentation-audit.md).
 
 ## Related next steps
 

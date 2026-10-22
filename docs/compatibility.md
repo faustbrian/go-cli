@@ -9,7 +9,9 @@ envelopes, error kinds and sentinels, default exit codes, completion protocol,
 and deterministic ordering are compatibility contracts.
 
 The minimum supported and CI-tested toolchain is Go 1.27.0. Releases run with
-`GOWORK=off`; local workspaces must not hide missing module dependencies. The
+`GOWORK=off`. The workspace replaces `go-cli/v2 v2.0.0` with the local root
+only so the nested benchmarks module can build before that version is
+published; the replacement is removed once the tag exists. The
 exported API is compared with its checked-in baseline.
 
 The parser is owned behind `internal/engine` and has no runtime module
@@ -29,7 +31,7 @@ documented with migration guidance.
 
 ## Security compatibility
 
-The supported v1 line rejects application-defined
+The supported v2 line rejects application-defined
 structured-output serializers and `json:",omitzero"` `IsZero` callbacks whose
 execution or allocation cannot be bounded. It also rejects encoder-reachable
 type graphs or struct metadata that exceed the documented output boundary.
@@ -38,6 +40,6 @@ command declares any secret binding, while retaining `errors.Is` identity;
 preselection cancellation and render failures use the same protection when any
 compiled command accepts secrets. Direct completion also retains protected
 cancellation-cause identity. These security corrections intentionally tighten
-hostile-input behavior on the supported v1 line. Consumers must replace custom
+hostile-input behavior on the supported line. Consumers must replace custom
 `Output.SetData` values with bounded built-in values and avoid relying on
 concrete callback-cause recovery for commands that accept secrets.

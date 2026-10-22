@@ -9,7 +9,7 @@ Owner: go-cli maintainers
 
 ## Scope and assets
 
-This model covers the supported v1 source line. The owned boundary is command
+This model covers the supported v2 source line. The owned boundary is command
 construction, argv parsing, typed input,
 lifecycle dispatch, buffered output, completion, generated references, and
 stable errors. Assets are secret-marked input values, terminal and JSON output
@@ -76,8 +76,9 @@ ownership and application-facing mitigations; `CLI-R5` is accepted Low risk.
 
 ## Compatibility and release disposition
 
-The stable published line remains v1. Rejecting custom structured-output
-serializers and withholding concrete secret-command callback causes are
-intentional security corrections on that supported line. Release requires the
-updated API baseline, direct owned-consumer checks, security gates, and
-publication evidence. The repository contains no local replacement directive.
+The supported line is v2; v1 is unsupported. Rejecting custom
+structured-output serializers and withholding concrete secret-command callback
+causes are intentional security corrections. Release requires the updated API
+baseline, direct owned-consumer checks, security gates, and publication
+evidence. The only local replacement is the workspace-scoped `go-cli/v2 v2.0.0`
+directive the nested benchmarks module needs before v2.0.0 is published.

@@ -146,7 +146,6 @@ func TestCompilationRejectsEveryMalformedDeclarationClass(t *testing.T) {
 		))},
 	}
 	for _, test := range cases {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			if _, err := Compile(test.root); !errors.Is(err, ErrInternal) {
@@ -260,4 +259,41 @@ func (stub optionStub) optionSpecification() optionSpec { return stub.spec }
 
 func completionStub(context.Context, CompletionRequest) ([]CompletionCandidate, error) {
 	return nil, nil
+}
+
+func TestClassifiedErrorMatchingAndDisclosureMatrix(t *testing.T) {
+	t.Parallel()
+
+	canceled := &Error{kind: ErrorKindCanceled}
+	deadline := &Error{kind: ErrorKindDeadline}
+	usage := &Error{kind: ErrorKindUsage}
+	if !canceled.Is(context.Canceled) || canceled.Is(context.DeadlineExceeded) {
+		t.Fatal("canceled error target matching changed")
+	}
+	if !deadline.Is(context.DeadlineExceeded) || deadline.Is(context.Canceled) {
+		t.Fatal("deadline error target matching changed")
+	}
+	if usage.Is(context.Canceled) || usage.Is(context.DeadlineExceeded) {
+		t.Fatal("usage error matched a context sentinel")
+	}
+
+	cause := errors.New("private cause")
+	tests := []struct {
+		name         string
+		cause        error
+		includeCause bool
+		want         string
+	}{
+		{name: "nil included cause", includeCause: true, want: "safe"},
+		{name: "hidden cause", cause: cause, want: "safe"},
+		{name: "included cause", cause: cause, includeCause: true, want: "safe: private cause"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := newClassifiedError(ErrorKindCommand, "safe", test.cause, test.includeCause)
+			if err.Error() != test.want || !errors.Is(err, test.cause) && test.cause != nil {
+				t.Fatalf("newClassifiedError() = %q, want %q", err, test.want)
+			}
+		})
+	}
 }

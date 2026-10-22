@@ -22,10 +22,10 @@ For ecosystem-wide package selection, construction, ownership, and lifecycle
 guidance, see the versioned [Golib ecosystem index](https://github.com/faustbrian/go-library-tools/blob/v1.8.4/docs/ecosystem/README.md)
 and its [Tooling family guidance](https://github.com/faustbrian/go-library-tools/blob/v1.8.4/docs/ecosystem/design-language.md#package-families-and-selection).
 
-The root module is stable at v1, follows Semantic Versioning, and requires Go
-1.27.0 or newer. Releases use root `vX.Y.Z` tags. Security corrections remain
-on the supported v1 line and are documented with migration guidance when they
-tighten hostile-input behavior.
+The root module is stable at v2, follows Semantic Versioning, and requires Go
+1.27.0 or newer. Releases use root `vX.Y.Z` tags. Security corrections are made
+on the supported v2 line and are documented with migration guidance when they
+tighten hostile-input behavior; v1 is no longer maintained.
 
 ## Adoption entry points
 
@@ -167,7 +167,7 @@ race. No services or test tags are declared. Base-free checks run fuzz seeds;
 changed-source CI selects active smoke. `make check-full` retains all explicit
 campaigns, reference generation and shell-completion checks. See
 [contributor verification](CONTRIBUTING.md#verification) for isolated tests,
-tool installation and release rehearsal. The producer is Go 1.27.2; module
+tool installation and release rehearsal. The producer is Go 1.27.3; module
 and API minima remain Go 1.27.0.
 
 ## Documentation

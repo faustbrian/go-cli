@@ -17,13 +17,20 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Changed
 
 - Move the module to `github.com/faustbrian/go-cli/v2`.
-- In option-less command sets, `--` ends option parsing, a bare `-` is an
-  unknown command, and an unknown option leaves `Result.Command` unselected,
-  matching command sets that declare options.
+- Command sets whose commands declare no options now follow the canonical
+  grammar. `--` ends option parsing, so `tool <command> --` runs the command
+  and `tool --` exits 0. `tool <command> extra --help` renders help instead
+  of a usage error. A bare `-`, `-5` or `-- <command>` before a command is an
+  unknown command, and `<command> -5` or `<command> -- x` is a usage error,
+  instead of an unknown option, and `<command> extra --unknown` is an unknown
+  option instead of a usage error. An unknown option leaves `Result.Command`
+  unselected. In a set with no commands, `version` is a usage error; use
+  `--version`.
 
 ### Security
 
-- Build with Go 1.27.3 to address GO-2026-6809 in `crypto/x509`.
+- Pin the repository toolchain to Go 1.27.3, which fixes GO-2026-6809 in
+  `crypto/x509`. Consumers choose their own toolchain.
 
 ## [1.2.0] - 2026-10-15
 

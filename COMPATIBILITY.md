@@ -1,6 +1,6 @@
 # Compatibility Policy
 
-The root module is stable at v1 and follows Semantic Versioning. Releases use
+The root module is stable at v2 and follows Semantic Versioning. Releases use
 root `vX.Y.Z` tags; there is no directory prefix.
 
 Incompatible exported API or documented behavior changes require a new major
@@ -13,5 +13,5 @@ resource ownership, ordering, retry/idempotency semantics, and documented
 defaults. A compile-compatible change can still be behaviorally breaking.
 
 Specification-backed modules MUST NOT diverge from their declared standards.
-Ambiguities require documented decisions and stable tests. Deprecated APIs
-follow [`DEPRECATION.md`](DEPRECATION.md).
+Ambiguities require documented decisions and stable tests. Removals follow
+[`DEPRECATION.md`](DEPRECATION.md).

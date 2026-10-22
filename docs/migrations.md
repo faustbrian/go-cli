@@ -9,14 +9,30 @@ Version 2 keeps one parser and removes the compatibility grammar instead of
 retaining it beside the canonical engine:
 
 - `CompileFlagCommand` is removed. Define the command with `NewCommand` and
-  `Compile`, and spell long options with two dashes; single-dash long names are
-  shorthand clusters in the canonical grammar.
-- Command sets whose commands declare no options now use the same parser as
-  every other command. `--` ends option parsing instead of being an unknown
-  option, a bare `-` is an unknown command instead of an unknown option, and an
-  unknown option no longer reports a selected command in `Result.Command`.
-  Exit codes for these cases are unchanged except that `tool --` and
-  `tool <command> --` now run the selected command.
+  `Compile`, and spell long options with two dashes. A single-dash long name is
+  a shorthand cluster in the canonical grammar, so `-name` can parse as `-n`
+  with the value `ame` when `n` is a shorthand. Unknown options report
+  `ErrUnknownOption` and options without a value report `ErrMissingValue`
+  instead of `ErrUsage`. `--help` renders help even after an earlier malformed
+  value, and `Run` also answers `__complete` and, when a version is set,
+  `--version`.
+- Command sets whose commands declare no options, including sets with no
+  commands, now use the same parser as every other command. Observable
+  differences from v1 in those sets:
+
+  | Arguments | v1 | v2 |
+  |---|---|---|
+  | `tool <command> --` | unknown option, exit 2 | runs the command |
+  | `tool --` | unknown option, exit 2 | no command runs, exit 0 |
+  | `tool <command> extra --help` | usage, exit 2 | help, exit 0 |
+  | `tool -`, `tool -5`, `tool -- <command>` | unknown option, exit 2 | unknown command, exit 2 |
+  | `tool <command> -5`, `tool <command> -- x` | unknown option, exit 2 | usage, exit 2 |
+  | `tool <command> extra --unknown` | usage, exit 2 | unknown option, exit 2 |
+  | `tool version` with no commands | version, exit 0 | usage, exit 2 |
+
+  An unknown option no longer reports a selected command in
+  `Result.Command`. `--version` still renders the version in every set, and
+  `version` remains a command when the set has commands.
 
 Replace `github.com/faustbrian/go-cli` imports with
 `github.com/faustbrian/go-cli/v2`. Libraries that expose go-cli types, such as
