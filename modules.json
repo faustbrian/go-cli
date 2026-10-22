@@ -170,7 +170,9 @@
       "version": "2.0.0",
       "tag_prefix": "v",
       "owned_dependencies": [],
-      "reverse_owned_dependencies": [],
+      "reverse_owned_dependencies": [
+        "github.com/faustbrian/go-cli/v2/benchmarks"
+      ],
       "external_runtime_dependencies": [],
       "required_services": [],
       "build_tags": [],
@@ -198,7 +200,7 @@
     },
     {
       "directory": "benchmarks",
-      "module_path": "github.com/faustbrian/go-cli/benchmarks",
+      "module_path": "github.com/faustbrian/go-cli/v2/benchmarks",
       "go_version": "1.27.0",
       "packages": [],
       "purpose": "See the module README and goal files.",
@@ -212,7 +214,7 @@
       "version": "unreleased",
       "tag_prefix": "benchmarks/v",
       "owned_dependencies": [
-        "github.com/faustbrian/go-cli"
+        "github.com/faustbrian/go-cli/v2"
       ],
       "reverse_owned_dependencies": [],
       "external_runtime_dependencies": [

@@ -1,10 +1,10 @@
-module github.com/faustbrian/go-cli/benchmarks
+module github.com/faustbrian/go-cli/v2/benchmarks
 
 go 1.27.0
 
 require (
 	github.com/alecthomas/kong v1.16.1
-	github.com/faustbrian/go-cli v1.1.1
+	github.com/faustbrian/go-cli/v2 v2.0.0
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/urfave/cli/v3 v3.14.0

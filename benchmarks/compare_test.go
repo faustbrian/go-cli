@@ -18,7 +18,7 @@ import (
 	"testing"
 
 	"github.com/alecthomas/kong"
-	framework "github.com/faustbrian/go-cli"
+	framework "github.com/faustbrian/go-cli/v2"
 	"github.com/spf13/cobra"
 	urfave "github.com/urfave/cli/v3"
 )

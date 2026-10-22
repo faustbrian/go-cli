@@ -10,8 +10,6 @@ and deterministic ordering are compatibility contracts.
 
 The minimum supported and CI-tested toolchain is Go 1.27.0. Releases run with
 `GOWORK=off`; local workspaces must not hide missing module dependencies. The
-nested benchmarks module consumes released versions only, so it moves to v2
-after v2.0.0 is published. The
 exported API is compared with its checked-in baseline.
 
 The parser is owned behind `internal/engine` and has no runtime module
