@@ -10,13 +10,15 @@ retaining it beside the canonical engine:
 
 - `CompileFlagCommand` is removed. Define the command with `NewCommand` and
   `Compile`. v1 parsed these commands with Go's `flag` package; v2 uses the
-  canonical grammar for both `Run` and `RunCommand`. These rules are the
-  complete set of differences in outcome, error kind and `Result.Command`:
+  canonical grammar for both `Run` and `RunCommand`, which
+  [parsing](parsing.md) defines. Test argument handling your scripts depend on
+  against v2. The principal differences are:
 
   1. A single-dash long name is not a long option: `-name`, `-name=x`,
      `-verbose`, `-help`, `-help=x`, `-h=x` and `-version` are unknown
      options (exit 2) unless they form a valid shorthand cluster. In v1
-     `-name` and `-name=x` set a defined option, `-help`, `-help=x` and `-h=x`
+     `-name` and `-name=x` set a defined option, `-help` and `-help=x`
+     requested help, `-h` and `-h=x` set an option named `h` or otherwise
      requested help, and other names were usage errors. Spell long options
      with two dashes.
   2. Only `--help` and `-h` request help. `--help=x` is an unknown option
@@ -35,10 +37,11 @@ retaining it beside the canonical engine:
      converted, and later tokens decide the outcome after an earlier
      malformed value: `--count=bad --count=1` runs, `--count=bad --help`
      renders help and `--count=bad --name` reports a missing value. v1
-     reported the malformed value.
-  7. A token starting with `-` and a digit, such as `-5`, is a positional
-     argument (a usage error unless help or version follows) instead of an
-     unknown flag.
+     reported the malformed value. Help, version and parse failures convert
+     no values, so custom `TypedOption` parsers do not run for them.
+  7. A negative-number-shaped token (`-` followed by a digit, or `-.` followed
+     by a digit, such as `-5` or `-.5`) is a positional argument instead of an
+     unknown flag; rules 3, 6 and 8 then decide the outcome.
   8. Unknown options report `ErrUnknownOption` and options without a value
      report `ErrMissingValue` instead of `ErrUsage`; both still exit 2.
   9. Positional usage errors and malformed values now report the command in
@@ -53,15 +56,17 @@ retaining it beside the canonical engine:
   after a command a usage error. Later tokens were never read. In v2:
 
   1. Before a command, `tool --` exits 0 without running anything, and `-`,
-     `-5` or a word after `--` is an unknown command (exit 2).
+     a negative-number-shaped token such as `-5` or `-.5`, or a word after
+     `--` is an unknown command (exit 2).
   2. After a command, and anywhere in a set with no commands, tokens are read
      left to right until `--`. The first `--help` or `-h` renders help
      (exit 0); the first `--version` renders the version (exit 0) in a set
      with no commands that has a version and is otherwise an unknown option;
      the first unknown option, including `-help`, reports an unknown option
      (exit 2). Only when none of these appears do leftover arguments (a word,
-     `-`, `-5`, or anything after `--`) report a usage error (exit 2); with no
-     leftovers the command runs, so `tool <command> --` runs the command.
+     `-`, a negative-number-shaped token, or anything after `--`) report a
+     usage error (exit 2); with no leftovers the command runs, so
+     `tool <command> --` runs the command.
   3. `version` is a command only in a set with commands. In a set with no
      commands `tool version` is a usage error (v1 rendered the version, or
      reported an unknown command without one); use `--version`.

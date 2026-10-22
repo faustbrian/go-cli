@@ -27,8 +27,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   are parsed after positional arguments, `--version`, `__complete` and
   `__completeNoDesc` are answered, usage and malformed-value errors report the
   command in `Result.Command`, the last value of a repeated scalar option wins, and negative
-  numbers are positional arguments. `docs/migrations.md` lists the complete
-  rules, including every exit-code change.
+  numbers are positional arguments. `docs/migrations.md` lists the principal
+  rules; `docs/parsing.md` defines the grammar.
 
 ### Security
 

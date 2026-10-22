@@ -26,7 +26,7 @@ evidence_root="$(mktemp -d "${TMPDIR:-/tmp}/go-cli-benchmark.XXXXXX")"
 GOCACHE="${evidence_root}/gocache" \
 GOMODCACHE="${evidence_root}/gomodcache" \
 GOTMPDIR="${evidence_root}/tmp" \
-GOTOOLCHAIN=go1.27.0 \
+GOTOOLCHAIN=go1.27.3 \
   ./scripts/capture-benchmark-evidence.sh "${evidence_root}/evidence"
 ```
 

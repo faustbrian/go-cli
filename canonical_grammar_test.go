@@ -93,6 +93,9 @@ func TestCommandSetUsesEngineGrammarWithoutOptions(t *testing.T) {
 		{args: []string{"-"}, wantErr: cli.ErrUnknownCommand, wantCode: 2},
 		{args: []string{"-5"}, wantErr: cli.ErrUnknownCommand, wantCode: 2},
 		{args: []string{"--", "deploy"}, wantErr: cli.ErrUnknownCommand, wantCode: 2},
+		{args: []string{"-.5"}, wantErr: cli.ErrUnknownCommand, wantCode: 2},
+		{args: []string{"deploy", "-.5"}, wantErr: cli.ErrUsage, wantCode: 2},
+		{args: []string{"deploy", "-.5", "--help"}, wantErr: cli.ErrHelp},
 		{args: []string{"deploy", "-5"}, wantErr: cli.ErrUsage, wantCode: 2},
 		{args: []string{"deploy", "-"}, wantErr: cli.ErrUsage, wantCode: 2},
 		{args: []string{"deploy", "-", "--help"}, wantErr: cli.ErrHelp},
@@ -235,6 +238,10 @@ func TestCanonicalCommandReplacesFlagCommandGrammar(t *testing.T) {
 		{args: []string{"--count=bad", "--help"}, wantErr: cli.ErrHelp},
 		{args: []string{"-5", "--help"}, wantErr: cli.ErrHelp},
 		{args: []string{"-5"}, wantErr: cli.ErrUsage, code: 2, command: "service"},
+		{args: []string{"-.5"}, wantErr: cli.ErrUsage, code: 2, command: "service"},
+		{args: []string{"-.5", "--help"}, wantErr: cli.ErrHelp},
+		{args: []string{"-5", "--unknown"}, wantErr: cli.ErrUnknownOption, code: 2},
+		{args: []string{"-5", "--count=bad"}, wantErr: cli.ErrMalformedValue, code: 2, command: "service"},
 	} {
 		ran, gotCount, gotH = false, 0, ""
 		result := application.Run(t.Context(), cli.Request{Args: test.args})
@@ -285,4 +292,55 @@ func TestCanonicalConcurrentInputsRemainInvocationLocal(t *testing.T) {
 		})
 	}
 	joined.Wait()
+}
+
+// TestCanonicalCommandSkipsConversionForHelpAndParseFailures pins that typed
+// parsers run only when the command proceeds past parsing.
+func TestCanonicalCommandSkipsConversionForHelpAndParseFailures(t *testing.T) {
+	t.Parallel()
+
+	calls := 0
+	value := cli.TypedOption("value", "VALUE", func(raw string) (string, error) {
+		calls++
+		return raw, nil
+	})
+	application, err := cli.Compile(cli.NewCommand("service", cli.WithOptions(value), cli.WithHandler(func(context.Context, cli.Invocation) error { return nil })))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, test := range []struct {
+		args  []string
+		calls int
+	}{
+		{args: []string{"--value=x", "--help"}},
+		{args: []string{"--value=x", "--unknown"}},
+		{args: []string{"--value=x", "--value=y"}, calls: 1},
+	} {
+		calls = 0
+		_ = application.Run(t.Context(), cli.Request{Args: test.args})
+		if calls != test.calls {
+			t.Fatalf("%q converted %d values, want %d", test.args, calls, test.calls)
+		}
+	}
+}
+
+// TestCanonicalCommandSetDoesNotSuggestTheTokenItself pins that a word after
+// "--" matching a command name produces no self-suggestion.
+func TestCanonicalCommandSetDoesNotSuggestTheTokenItself(t *testing.T) {
+	t.Parallel()
+
+	application, err := cli.CompileCommandSet(cli.CommandSet{Name: "tool", Commands: []cli.CommandSpec{{
+		Name: "deploy", Handler: func(context.Context, cli.Invocation) error { return nil },
+	}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	result := application.RunCommand(t.Context(), cli.Request{Args: []string{"--", "deploy"}})
+	if !errors.Is(result.Err, cli.ErrUnknownCommand) || strings.Contains(result.Err.Error(), "did you mean") {
+		t.Fatalf("-- deploy = %v", result.Err)
+	}
+	result = application.RunCommand(t.Context(), cli.Request{Args: []string{"deplyo"}})
+	if !strings.Contains(result.Err.Error(), `did you mean "deploy"`) {
+		t.Fatalf("near miss = %v", result.Err)
+	}
 }

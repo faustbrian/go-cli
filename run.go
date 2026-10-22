@@ -832,6 +832,11 @@ func suggestCommand(command *compiledCommand, token string) string {
 	case 1:
 		return ""
 	}
+	// A token after "--" can equal a command name; suggesting the token itself
+	// would not help the user.
+	if suggestion == token {
+		return ""
+	}
 
 	return suggestion
 }
